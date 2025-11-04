@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>편의점 행사 테스트</title>
+
+    <!-- 부트스트랩 (보기 좋게만) -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    />
+
+    <style>
+        :root {
+            --card-radius: 12px;
+            --shadow: 0 6px 16px rgba(0,0,0,.06);
+        }
+        body { background:#f8f9fa; padding:24px; }
+        h1 { font-size:1.4rem; font-weight:600; margin-bottom:1rem; text-align:center; }
+
+        /* 카드 그리드 */
+        #crawlingCanvas {
+            display:grid;
+            grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+            gap:16px;
+        }
+
+        .status-box {
+            background:#fff; border:1px dashed #ced4da; color:#6c757d;
+            border-radius:var(--card-radius); padding:20px; text-align:center;
+        }
+
+        .item-card {
+            background:#fff; border:1px solid #eee; border-radius:var(--card-radius);
+            padding:12px; box-shadow:var(--shadow);
+            display:flex; flex-direction:column; gap:8px;
+        }
+        .item-img-wrap {
+            height:160px; display:flex; align-items:center; justify-content:center;
+            overflow:hidden; border-radius:8px; background:#fafafa;
+        }
+        .item-img-wrap img { max-width:100%; max-height:160px; object-fit:contain; }
+        .item-brand { font-size:12px; color:#666; }
+        .item-name { font-weight:600; min-height:38px; }
+        .item-bottom-row { display:flex; align-items:center; justify-content:space-between; }
+        .item-price { font-weight:700; }
+        .promo-badge {
+            font-size:12px; padding:2px 8px; border-radius:999px; background:#e9ecef;
+        }
+
+        /* 간단한 프로모 스타일 */
+        .promo-ONE_PLUS_ONE { background:#e7f5ff; color:#0b7285; }
+        .promo-TWO_PLUS_ONE { background:#fff3bf; color:#946200; }
+        .promo-GIFT        { background:#e6fcf5; color:#087f5b; }
+        .promo-NONE        { background:#f1f3f5; color:#495057; }
+    </style>
+</head>
+<body>
+
+<h1>편의점 행사 상품 (최신 10개)</h1>
+
+<div class="container mb-3">
+    <div class="d-flex align-items-center justify-content-between">
+
+        <button id="btnReload" class="btn btn-sm btn-outline-primary">새로고침</button>
+    </div>
+</div>
+
+<div id="crawlingCanvas">
+    <div class="status-box">불러오는 중...</div>
+</div>
+
+<!-- jQuery / axios -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+    $(function () {
+        $('#btnReload').on('click', loadCrawlingData);
+        loadCrawlingData();
+    });
+
+
+    function loadCrawlingData() {
+        setLoading(true);
+        axios.get('/api/v1/crawl/SEV', { params: { page: 0, size: 20, sort: 'price,asc' }})
+            .then(function (res) {
+                // ApiResponse 래퍼 대응 + 과거 구조도 fallback
+                const payload = res.data;
+                const response = payload?.response ?? payload; // 래퍼가 있으면 response, 없으면 그대로
+                const list =
+                    response?.items ??
+                    response?.latest10 ??
+                    (Array.isArray(response) ? response : []);   // 최후 fallback
+
+                drawCrawling(list);
+            })
+            .catch(function (err) {
+                console.error('[loadCrawlingData] 실패', err);
+                $('#crawlingCanvas').html('<div class="status-box">데이터를 불러오지 못했습니다 😢</div>');
+            })
+            .finally(() => setLoading(false));
+    }
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            $('#crawlingCanvas').html('<div class="status-box">불러오는 중...</div>');
+        }
+    }
+
+    // 화면에 그리기
+    function drawCrawling(list) {
+        const $wrap = $('#crawlingCanvas').empty();
+
+        if (!Array.isArray(list) || list.length === 0) {
+            $wrap.html('<div class="status-box">데이터가 없습니다.</div>');
+            return;
+        }
+
+        list.forEach(item => {
+            $wrap.append(makeCard(item));
+        });
+    }
+
+    // 카드 컴포넌트
+    function makeCard(item) {
+        const brand = item?.sourceChain ?? '';
+        const name = item?.productName ?? '';
+        const priceVal = item?.price;
+        const priceText = (priceVal === null || priceVal === undefined)
+            ? '-'
+            : Number(priceVal).toLocaleString('ko-KR') + '원';
+
+        const promo = normalizePromo(item?.promoType);
+        const promoLabel = formatPromo(promo);
+        const promoClass = 'promo-' + promo;
+
+        const imgHtml = item?.imageUrl
+            ? `<img src="${item.imageUrl}" alt="${escapeHtml(name)}">`
+            : `<span style="font-size:12px; color:#aaa;">no image</span>`;
+
+        return `
+        <div class="item-card">
+          <div class="item-img-wrap">${imgHtml}</div>
+          <div class="item-brand">${escapeHtml(brand)}</div>
+          <div class="item-name">${escapeHtml(name)}</div>
+          <div class="item-bottom-row">
+            <div class="item-price">${priceText}</div>
+            <div class="promo-badge ${promoClass}">${promoLabel}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 서버 enum 표기 흔들림 방지 (ONEPLUSONE → ONE_PLUS_ONE 등)
+    function normalizePromo(promoType) {
+        if (!promoType) return 'NONE';
+        const val = String(promoType).toUpperCase();
+        if (val === 'ONE_PLUS_ONE' || val === 'ONEPLUSONE') return 'ONE_PLUS_ONE';
+        if (val === 'TWO_PLUS_ONE' || val === 'TWOPLUSONE') return 'TWO_PLUS_ONE';
+        if (val === 'GIFT') return 'GIFT';
+        return 'NONE';
+    }
+
+    function formatPromo(promoType) {
+        switch (promoType) {
+            case 'ONE_PLUS_ONE': return '1+1';
+            case 'TWO_PLUS_ONE': return '2+1';
+            case 'GIFT':         return '덤증정';
+            case 'NONE':
+            default:             return '행사없음';
+        }
+    }
+
+    // XSS 방지
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+</body>
+</html>
