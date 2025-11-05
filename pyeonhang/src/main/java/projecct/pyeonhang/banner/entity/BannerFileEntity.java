@@ -25,7 +25,7 @@ public class BannerFileEntity extends BaseTimeEntity {
 
     private Long fileSize;
 
-    @ManyToOne
-    @JoinColumn(name="banner_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "banner_id", nullable = false)
     private BannerEntity banner;
 }

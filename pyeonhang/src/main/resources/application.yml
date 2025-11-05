@@ -12,8 +12,8 @@ server:
   file:
     upload:
       path: C:\\files\\upload\\banner\\
-    editor:
-      path: C:\\files\\upload\\editor\\
+    coupon:
+      path: C:\\files\\upload\\coupon\\
 
 
 spring:

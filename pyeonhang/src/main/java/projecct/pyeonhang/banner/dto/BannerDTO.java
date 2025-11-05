@@ -24,9 +24,10 @@ public class BannerDTO {
 
     private LocalDateTime lastModifiedDate;
 
-    public static BannerDTO of(BannerEntity entity, BannerFileEntity file) {
-        LocalDateTime last =
-                entity.getUpdateDate() == null ? entity.getCreateDate() : entity.getUpdateDate();
+    public static BannerDTO of(BannerEntity entity) {
+        BannerFileEntity file = entity.getFile();
+        LocalDateTime last = entity.getUpdateDate() == null ? entity.getCreateDate() : entity.getUpdateDate();
+
         return BannerDTO.builder()
                 .bannerId(entity.getBannerId())
                 .title(entity.getTitle())
