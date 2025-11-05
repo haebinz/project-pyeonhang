@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import projecct.pyeonhang.security.dto.SecureUserDTO;
+import projecct.pyeonhang.users.dto.UserSecureDTO;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
@@ -22,7 +22,7 @@ public class SecureUserDetailService implements UserDetailsService {
                         .orElseThrow(() -> new RuntimeException("사용자 없음"));
 
 
-        return new SecureUserDTO(entity.getUserId(), entity.getUserName(),
+        return new UserSecureDTO(entity.getUserId(), entity.getUserName(),
                 entity.getPasswd(), entity.getRole().getRoleId()) ;
     }
 }

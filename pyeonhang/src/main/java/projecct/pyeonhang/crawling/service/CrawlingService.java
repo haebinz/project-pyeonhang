@@ -103,9 +103,8 @@ public class CrawlingService {
     }
 
 
-
-    //행사 유형별 가져오기
-    public Map<String,Object> getCrawlingByPromoType(String sourceChain,CrawlingEntity.PromoType promoType,Pageable pageable) {
+/*
+*  public Map<String,Object> getCrawlingByPromoType(String sourceChain,CrawlingEntity.PromoType promoType,Pageable pageable) {
         Map<String,Object> resultMap = new HashMap<>();
 
         Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChainAndPromoType(sourceChain ,promoType, pageable);
@@ -116,6 +115,23 @@ public class CrawlingService {
                 .collect(Collectors.toList());
 
         resultMap.put("sourceChain", sourceChain);
+        resultMap.put("totalElements", pageResult.getTotalElements());
+        resultMap.put("totalPages", pageResult.getTotalPages());
+        resultMap.put("items", items);
+
+        return resultMap;
+    }*/
+    //행사 유형별 가져오기
+    public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
+        Map<String,Object> resultMap = new HashMap<>();
+
+        Page<CrawlingEntity> pageResult = crawlingRepository.findByPromoType(promoType, pageable);
+        // DTO 변환
+        List<CrawlingDTO> items = pageResult.getContent()
+                .stream()
+                .map(CrawlingDTO::of)
+                .collect(Collectors.toList());
+
         resultMap.put("totalElements", pageResult.getTotalElements());
         resultMap.put("totalPages", pageResult.getTotalPages());
         resultMap.put("items", items);

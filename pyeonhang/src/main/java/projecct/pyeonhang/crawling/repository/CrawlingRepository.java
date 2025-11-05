@@ -36,6 +36,10 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
     Page<CrawlingEntity> findBySourceChainAndProductType(
             String sourceChain, CrawlingEntity.ProductType productType, Pageable pageable);
 
+    Page<CrawlingEntity> findByPromoType(
+            CrawlingEntity.PromoType promoType, Pageable pageable
+    );
+
     //제품 검색
     @Query("""
         select c

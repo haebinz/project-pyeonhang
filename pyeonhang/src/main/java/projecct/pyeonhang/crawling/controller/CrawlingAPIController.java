@@ -39,7 +39,7 @@ public class CrawlingAPIController {
 
     //체인별  api/v1/crawl/chain/{sourceChain}
     //체인별 전체 상품
-    @GetMapping("/crawl/{sourceChain}")
+    @GetMapping("/crawl/chain/{sourceChain}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getChain(@PathVariable String sourceChain,
                                                                     @PageableDefault(size=20,page=0,
                                                                     sort="price",
@@ -94,26 +94,6 @@ public class CrawlingAPIController {
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
-
-
-
-    /*@GetMapping("/crawl/{sourceChain}/{promoType}")
-    public Map<String, Object> getChainByPromoType(@PathVariable String sourceChain,
-                                                   @PathVariable CrawlingEntity.PromoType promoType,
-                                                   @RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "20") int size) {
-        return crawlingService.getByChainAndPromo(sourceChain, promoType, page, size);
-    }*/
-
-
-    /*//행사 유형별 아이템 표시
-    @GetMapping("/crawl/promo/{promoType}")
-    public ResponseEntity<Map<String, Object>> getByPromo(
-            @PathVariable CrawlingEntity.PromoType promoType
-    ) {
-        return ResponseEntity.ok(crawlingService.getCrawlingByPromoType(promoType));
-    }*/
-
     //제품 상세
     @GetMapping("/crawl/detail/{crawlId}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawling(@PathVariable int crawlId) throws Exception {
@@ -147,6 +127,19 @@ public class CrawlingAPIController {
         };
         return ResponseEntity.status(status).body(resultMap);
     }
+
+    @GetMapping("/crawl/promo/{promoType}")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlingByPromoType(
+            @PathVariable CrawlingEntity.PromoType promoType,
+            @PageableDefault(size=20,page=0,
+                    sort="price",
+                    direction=Sort.Direction.ASC) Pageable pageable){
+        Map<String,Object> resultMap= crawlingService.getCrawlingByPromoType(promoType,pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }
+
+
+
 
 
 
