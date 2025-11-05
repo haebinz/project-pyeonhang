@@ -162,6 +162,7 @@ public class CrawlingService {
         //업데이트 할때 변경된 부분 없으면 그대로
         if (dto.getProductName() != null)   entity.setProductName(dto.getProductName());
         if (dto.getSourceChain() != null)   entity.setSourceChain(dto.getSourceChain());
+        if (dto.getProductType() != null)   entity.setProductType(dto.getProductType());
         if (dto.getPrice() != null)         entity.setPrice(dto.getPrice());
         if (dto.getImageUrl() != null)      entity.setImageUrl(dto.getImageUrl());
         if (dto.getPromoType() != null)     entity.setPromoType(dto.getPromoType());

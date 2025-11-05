@@ -21,13 +21,15 @@ public class UsersEntity extends BaseTimeEntity {
     private String birth;
     private String phone;
     private String email;
-    private Integer pointBalance;
+
     @Column( columnDefinition = "CHAR(1)")
     private String useYn;
     @Column( columnDefinition = "CHAR(1)")
     @ColumnDefault("N")
     private String delYn;
 
+
+    private Integer pointBalance;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name="user_role")
@@ -38,6 +40,6 @@ public class UsersEntity extends BaseTimeEntity {
     void applyDefaults() {
         if (useYn == null) useYn = "Y";
         if (delYn == null) delYn = "N";
-        if (pointBalance == null) pointBalance = 0; // 이것도 종종 null 나옴
+        if (pointBalance == null) pointBalance = 0;
     }
 }
