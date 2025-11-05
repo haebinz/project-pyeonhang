@@ -28,6 +28,7 @@ public class CrawlingAPIController {
     private final CrawlingService crawlingService;
     private final CrawlingRepository crawlingRepository;
 
+    //실험용입니다!!!
     @GetMapping("/crawl") //전체 가져오기 -> 화면에 뜨는지 보기위해서 현재는 10개만 표시하도록
     public ResponseEntity<Map<String, Object>> getCrawlingAll() throws Exception {
         Map<String, Object> resultMap = crawlingService.getCrawlingAll();
@@ -37,8 +38,9 @@ public class CrawlingAPIController {
 
     
 
-    //체인별  api/v1/crawl/chain/{sourceChain}
+
     //체인별 전체 상품
+    //ex)api/v1/crawl/chain/SEV
     @GetMapping("/crawl/chain/{sourceChain}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getChain(@PathVariable String sourceChain,
                                                                     @PageableDefault(size=20,page=0,
@@ -48,6 +50,7 @@ public class CrawlingAPIController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
     //체인별 전체 상품->카테고리 고르기
+    //ex)crawl/SEV/promo/SNACK
     @GetMapping("/crawl/{sourceChain}/promo/{productType}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getChainTotal(@PathVariable String sourceChain,
                                                                          @PathVariable CrawlingEntity.ProductType productType,
@@ -59,6 +62,8 @@ public class CrawlingAPIController {
     }
 
     //체인별 제품->행사 유형별
+    //체인/행사유형 입력
+    //ex)crawl/SEV/ONE_PLUS_ONE
     @GetMapping("/crawl/{sourceChain}/{promoType}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getChainByPromoType(@PathVariable String sourceChain,
                                                                                @PathVariable CrawlingEntity.PromoType promoType,
@@ -68,10 +73,22 @@ public class CrawlingAPIController {
         Map<String,Object> resultMap = crawlingService.getByChainAndPromo(sourceChain,promoType,pageable);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
+    //행사유형별 제품(ex->1+1,2+1...)
+    //원하는 행사유형 입력 ex)crawl/promo/ONE_PLUS_ONE
+    @GetMapping("/crawl/promo/{promoType}")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlingByPromoType(
+            @PathVariable CrawlingEntity.PromoType promoType,
+            @PageableDefault(size=20,page=0,
+                    sort="price",
+                    direction=Sort.Direction.ASC) Pageable pageable){
+        Map<String,Object> resultMap= crawlingService.getCrawlingByPromoType(promoType,pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }
 
 
 
     //체인별제품->행사유형->카테고리
+    //ex)crawl/CU/GIFT/LIFE
     @GetMapping("/crawl/{sourceChain}/{promoType}/{productType}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getCategory(@PathVariable String sourceChain,
                                                                        @PathVariable CrawlingEntity.PromoType promoType,
@@ -128,15 +145,7 @@ public class CrawlingAPIController {
         return ResponseEntity.status(status).body(resultMap);
     }
 
-    @GetMapping("/crawl/promo/{promoType}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlingByPromoType(
-            @PathVariable CrawlingEntity.PromoType promoType,
-            @PageableDefault(size=20,page=0,
-                    sort="price",
-                    direction=Sort.Direction.ASC) Pageable pageable){
-        Map<String,Object> resultMap= crawlingService.getCrawlingByPromoType(promoType,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }
+
 
 
 
