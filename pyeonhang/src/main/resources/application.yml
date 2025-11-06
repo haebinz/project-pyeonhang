@@ -11,9 +11,9 @@ server:
   port: 9090 #나중에 AWS포트로변경
   file:
     upload:
-      path: C:\\files\\upload\\product\\
-    editor:
-      path: C:\\files\\upload\\editor\\
+      path: C:\\files\\upload\\banner\\
+    coupon:
+      path: C:\\files\\upload\\coupon\\
 
 
 spring:

@@ -80,7 +80,8 @@ public class SecurityConfig {
                                         .requestMatchers("/crawl/**").permitAll()
                                         .requestMatchers("/static/**").permitAll()
                                         .requestMatchers("/files/**").permitAll()
-                                        .anyRequest().authenticated()
+                                        .anyRequest().permitAll()
+                                        //.anyRequest().authenticated()
                 )//로그인 처리
                 .formLogin(
                         form ->
