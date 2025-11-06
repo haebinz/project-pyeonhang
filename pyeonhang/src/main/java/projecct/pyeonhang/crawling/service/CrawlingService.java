@@ -25,9 +25,59 @@ public class CrawlingService {
 
 
     private final CrawlingRepository crawlingRepository;
-    private final FileUtils fileUtils;
 
-    // 전체 가져오기
+    public Map<String, Object> getByUnifiedFilters(
+            String sourceChain,
+            String promoTypeRaw,
+            String productTypeRaw,
+            String keyword,
+            Pageable pageable
+    ) {
+        String src = normalizeBlankToNull(sourceChain);
+
+        CrawlingEntity.PromoType promo = parsePromo(promoTypeRaw);
+        CrawlingEntity.ProductType prod = parseProduct(productTypeRaw);
+
+        String q = normalizeBlankToNull(keyword);
+        if (q != null) q = q.trim();
+
+        Page<CrawlingEntity> page = crawlingRepository.filterAll(src, promo, prod, q, pageable);
+
+        Map<String,Object> resultMap = new HashMap<>();
+        resultMap.put("sourceChain", src);
+        resultMap.put("promoType", promo);
+        resultMap.put("productType", prod);
+        resultMap.put("query", q);
+        resultMap.put("totalElements", page.getTotalElements());
+        resultMap.put("totalPages", page.getTotalPages());
+        resultMap.put("currentPage", pageable.getPageNumber());
+        resultMap.put("pageSize", pageable.getPageSize());
+        resultMap.put("items", page.getContent().stream().map(CrawlingDTO::of).toList());
+        return resultMap;
+    }
+
+    private static String normalizeBlankToNull(String s) {
+        if (s == null) return null;
+        String v = s.trim();
+        if (v.isEmpty()) return null;
+        if ("ALL".equalsIgnoreCase(v) || "-".equals(v) || "전체".equals(v)) return null;
+        return v;
+    }
+
+    private static CrawlingEntity.PromoType parsePromo(String raw) {
+        String v = normalizeBlankToNull(raw);
+        if (v == null) return null;
+        if ("전체".equals(v)) return null; // 필터 의미로만 사용
+        return CrawlingEntity.PromoType.valueOf(v);
+    }
+
+    private static CrawlingEntity.ProductType parseProduct(String raw) {
+        String v = normalizeBlankToNull(raw);
+        if (v == null) return null;
+        return CrawlingEntity.ProductType.valueOf(v);
+    }
+
+    /*// 전체 가져오기
     public Map<String,Object> getCrawlingAll() {
         Map<String,Object> resultMap = new HashMap<>();
         resultMap.put("totalCount", crawlingRepository.count());
@@ -37,9 +87,24 @@ public class CrawlingService {
                 .collect(Collectors.toList())
         );
         return resultMap;
+    }*/
+
+    //전체 가져오기(전체 상품)
+    /*public Map<String,Object> getAll( Pageable pageable){
+        Map<String,Object> resultMap = new HashMap<>();
+        Page<CrawlingEntity> pageResult = crawlingRepository.findAll(pageable);
+        List<CrawlingDTO> items = pageResult.getContent()
+                .stream()
+                .map(CrawlingDTO::of)
+                .collect(Collectors.toList());
+        resultMap.put("items",items);
+        resultMap.put("totalPages",pageResult.getTotalPages());
+        resultMap.put("currentPage",pageable.getPageNumber());
+        resultMap.put("pageSize",pageable.getPageSize());
+        return resultMap;
     }
 
-    
+
 
     // 체인별 상세 (체인별 제품 count + 전체)
     public Map<String,Object> getCrawlingBySourceChain(String sourceChain, Pageable pageable) {
@@ -103,9 +168,8 @@ public class CrawlingService {
     }
 
 
-
-    //행사 유형별 가져오기
-    public Map<String,Object> getCrawlingByPromoType(String sourceChain,CrawlingEntity.PromoType promoType,Pageable pageable) {
+/*
+*  public Map<String,Object> getCrawlingByPromoType(String sourceChain,CrawlingEntity.PromoType promoType,Pageable pageable) {
         Map<String,Object> resultMap = new HashMap<>();
 
         Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChainAndPromoType(sourceChain ,promoType, pageable);
@@ -116,6 +180,24 @@ public class CrawlingService {
                 .collect(Collectors.toList());
 
         resultMap.put("sourceChain", sourceChain);
+        resultMap.put("totalElements", pageResult.getTotalElements());
+        resultMap.put("totalPages", pageResult.getTotalPages());
+        resultMap.put("items", items);
+
+        return resultMap;
+    }*/
+    /*
+    //행사 유형별 가져오기
+    public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
+        Map<String,Object> resultMap = new HashMap<>();
+
+        Page<CrawlingEntity> pageResult = crawlingRepository.findByPromoType(promoType, pageable);
+        // DTO 변환
+        List<CrawlingDTO> items = pageResult.getContent()
+                .stream()
+                .map(CrawlingDTO::of)
+                .collect(Collectors.toList());
+
         resultMap.put("totalElements", pageResult.getTotalElements());
         resultMap.put("totalPages", pageResult.getTotalPages());
         resultMap.put("items", items);
@@ -143,7 +225,7 @@ public class CrawlingService {
         resultMap.put("items", items);
 
         return resultMap;
-    }
+    }*/
 
 
 
@@ -174,7 +256,7 @@ public class CrawlingService {
         resultMap.put("updated", CrawlingDTO.of(entity));
         return resultMap;
     }
-    
+
     //제품 삭제
     @Transactional
     public Map<String,Object> deleteCrawlingProduct(int crawlId) {
@@ -196,6 +278,7 @@ public class CrawlingService {
 
         return resultMap;
     }
+    /*
     //제품 검색
     public Map<String, Object> searchProducts(String sourceChain, String keyword, Pageable pageable) {
         String src = (sourceChain == null || sourceChain.isBlank()) ? null : sourceChain.trim();
@@ -210,7 +293,7 @@ public class CrawlingService {
         result.put("totalPages", page.getTotalPages());
         result.put("items", page.getContent().stream().map(CrawlingDTO::of).toList());
         return result;
-    }
+    }*/
 
     public Map<String,Object> getProductDetail(int crawlId){
         Map<String,Object> resultMap = new HashMap<>();
@@ -238,6 +321,5 @@ public class CrawlingService {
                 .map(CrawlingDTO::of)
                 .collect(Collectors.toList());
     }
-
 
 }
