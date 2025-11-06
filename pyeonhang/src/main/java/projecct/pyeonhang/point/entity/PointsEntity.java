@@ -38,4 +38,9 @@ public class PointsEntity extends BaseTimeEntity {
     private String reason;
 
 
+
+
+
+
+
 }

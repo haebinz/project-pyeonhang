@@ -12,8 +12,8 @@ server:
   file:
     upload:
       path: C:\\files\\upload\\banner\\
-    coupon:
-      path: C:\\files\\upload\\coupon\\
+    editor:
+      path: C:\\files\\upload\\editor\\
 
 
 spring:
@@ -82,3 +82,9 @@ logging:
           descriptor:
             sql : trace
   config : #classpath:logb ack.xml
+
+# 이미지 클라우드
+cloudinary:
+  cloud_name: dmmb3enay
+  api_key: 816594852459833
+  api_secret: 4uScSdblDA2pGsPoURHZjuDzLO4

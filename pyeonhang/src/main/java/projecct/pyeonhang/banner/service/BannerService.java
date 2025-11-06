@@ -4,22 +4,17 @@ package projecct.pyeonhang.banner.service;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import projecct.pyeonhang.banner.dto.BannerDTO;
 import projecct.pyeonhang.banner.dto.BannerRequestDTO;
-import projecct.pyeonhang.banner.dto.BannerUpdateDTO;
+import projecct.pyeonhang.banner.dto.BannerResponseDTO;
 import projecct.pyeonhang.banner.entity.BannerEntity;
 import projecct.pyeonhang.banner.entity.BannerFileEntity;
 import projecct.pyeonhang.banner.repository.BannerFileRepository;
 import projecct.pyeonhang.banner.repository.BannerRepository;
-import projecct.pyeonhang.common.dto.PageVO;
 import projecct.pyeonhang.common.utils.FileUtils;
-
 
 import java.io.File;
 import java.util.*;
@@ -36,55 +31,49 @@ public class BannerService {
     private String filePath;
 
     private List<String> extentions =
-            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp");
+            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp", "svg");
 
-    @Transactional(readOnly = true)
-    public Map<String, Object> getBannerList(Pageable pageable) {
-        Map<String, Object> resultMap = new HashMap<>();
+    public List<BannerResponseDTO> getAllBanner() throws Exception{
+        List<BannerEntity> bannerList = bannerRepository.findAll();
+        List<BannerResponseDTO> resultList = bannerList.stream().map(bannerEntity -> BannerResponseDTO.of(bannerEntity)).toList();
 
-        Page<BannerEntity> pageList = bannerRepository.findAll(pageable); // @EntityGraph(file) 적용됨
-
-        PageVO pageVO = new PageVO();
-        pageVO.setData(pageList.getNumber(), (int) pageList.getTotalElements());
-
-        List<BannerDTO> contents = pageList.getContent().stream()
-                .map(BannerDTO::of)
-                .toList();
-
-        resultMap.put("total", pageList.getTotalElements());
-        resultMap.put("page", pageList.getNumber());
-        resultMap.put("banners", contents);
-        // resultMap.put("pageInfo", pageVO);
-        return resultMap;
+        return resultList;
     }
-
     //배너 등록
     @Transactional
     public void registerBanner(BannerRequestDTO request) throws Exception {
+        // 파일 필수
         MultipartFile file = request.getFile();
-        if (file == null || file.isEmpty()) throw new RuntimeException("파일은 필수입니다.");
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("파일은 필수입니다.");
+        }
 
+        // 확장자 체크
         String fileName = file.getOriginalFilename();
         String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
-        if (!extentions.contains(ext)) throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
+        if (!extentions.contains(ext)) {
+            throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
+        }
 
+        // 업로드
         Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
         if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
 
-        BannerEntity banner = new BannerEntity();
-        banner.setTitle(request.getTitle());
-        banner.setLinkUrl(request.getLinkUrl());
-        banner.setUseYn("Y");
+        // 배너 저장
+        BannerEntity bannerEntity = new BannerEntity();
+        bannerEntity.setTitle(request.getTitle());
+        bannerEntity.setLinkUrl(request.getLinkUrl());
+        bannerEntity.setUseYn("Y");
+        bannerRepository.save(bannerEntity);
 
-        BannerFileEntity fileEntity = new BannerFileEntity();
-        fileEntity.setFileName(fileMap.get("fileName").toString());
-        fileEntity.setStoredName(fileMap.get("storedFileName").toString());
-        fileEntity.setFilePath(filePath);
-        fileEntity.setFileSize(getFileSize(filePath + fileEntity.getStoredName()));
-
-
-        banner.setFile(fileEntity);
-        bannerRepository.save(banner);
+        // 파일 저장
+        BannerFileEntity bannerFileEntity = new BannerFileEntity();
+        bannerFileEntity.setBanner(bannerEntity);
+        bannerFileEntity.setFileName(fileMap.get("fileName").toString());
+        bannerFileEntity.setStoredName(fileMap.get("storedFileName").toString());
+        bannerFileEntity.setFilePath(filePath);
+        bannerFileEntity.setFileSize(getFileSize(filePath + bannerFileEntity.getStoredName()));
+        bannerFileRepository.save(bannerFileEntity);
     }
 
     private long getFileSize(String absolutePath) {
@@ -94,44 +83,63 @@ public class BannerService {
 
     //배너 수정(title,linkUrl,file,useYn)
     @Transactional
-    public Map<String, Object> updateBanner(int bannerId, BannerUpdateDTO update) throws Exception {
+    public Map<String, Object> updateBanner(int bannerId, BannerRequestDTO update) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
 
         try {
             BannerEntity banner = bannerRepository.findById(bannerId)
                     .orElseThrow(() -> new RuntimeException("배너를 찾을 수 없습니다."));
 
-            if (update.getTitle() != null) banner.setTitle(update.getTitle().trim());
-            if (update.getLinkUrl() != null) banner.setLinkUrl(update.getLinkUrl().trim());
+            // 부분 업데이트 (null이면 기존값 유지)
+            if (update.getTitle() != null) {
+                banner.setTitle(update.getTitle().trim());
+            }
+            if (update.getLinkUrl() != null) {
+                banner.setLinkUrl(update.getLinkUrl().trim());
+            }
             if (update.getUseYn() != null) {
                 String useYn = update.getUseYn().trim().toUpperCase(Locale.ROOT);
-                if (!useYn.equals("Y") && !useYn.equals("N")) throw new RuntimeException("useYn은 Y 또는 N만 허용");
+                if (!useYn.equals("Y") && !useYn.equals("N")) {
+                    throw new RuntimeException("useYn은 Y 또는 N만 허용합니다.");
+                }
                 banner.setUseYn(useYn);
             }
 
+            // 파일 선택 업로드 (추가 때 쓰던 흐름 그대로)
             MultipartFile file = update.getFile();
             if (file != null && !file.isEmpty()) {
                 String fileName = file.getOriginalFilename();
-                String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
-                if (!extentions.contains(ext)) throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능");
+                String ext = fileName.substring(fileName.lastIndexOf(".") + 1)
+                        .toLowerCase(Locale.ROOT);
+                if (!extentions.contains(ext)) {
+                    throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능");
+                }
 
-                Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
+                // 업로드 실행
+                Map<String, Object> fileMap = fileUtils.uploadFiles(file,filePath);
                 if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
 
-                BannerFileEntity fe = banner.getFile();
-                if (fe == null) {
-                    fe = new BannerFileEntity();
-                    banner.setFile(fe); // 양방향 세팅
-                }
-                fe.setFileName(fileMap.get("fileName").toString());
-                fe.setStoredName(fileMap.get("storedFileName").toString());
-                fe.setFilePath(filePath);
-                fe.setFileSize(getFileSize(filePath + fe.getStoredName()));
+                // 파일 메타 저장
+                BannerFileEntity fileEntity = new BannerFileEntity();
+                fileEntity.setBanner(banner);
+                fileEntity.setFileName(fileMap.get("fileName").toString());
+                fileEntity.setStoredName(fileMap.get("storedFileName").toString());
+                fileEntity.setFilePath(filePath);
+                fileEntity.setFileSize(getFileSize(filePath + fileEntity.getStoredName()));
+                bannerFileRepository.save(fileEntity);
 
-                resultMap.put("fileName", fe.getFileName());
-                resultMap.put("storedName", fe.getStoredName());
-                resultMap.put("filePath", fe.getFilePath());
-                resultMap.put("fileSize", fe.getFileSize());
+                // 응답용 최신 파일 정보
+                resultMap.put("fileName", fileEntity.getFileName());
+                resultMap.put("storedName", fileEntity.getStoredName());
+                resultMap.put("filePath", fileEntity.getFilePath());
+                resultMap.put("fileSize", fileEntity.getFileSize());
+            } else {
+                // 업데이트 이미지와 기존 이미지가 없다면
+                if(banner.getBannerFile() == null) {
+                    throw new RuntimeException("배너 이미지가 필요합니다.");
+                }
+                // 기존 이미지가 있다면 기존 이미지 유지
+                bannerRepository.save(banner);
             }
 
             resultMap.put("resultCode", 200);
@@ -148,7 +156,6 @@ public class BannerService {
             return resultMap;
         }
     }
-
 
 
     //배너 삭제
@@ -171,5 +178,36 @@ public class BannerService {
        }
         return resultMap;
     }
+
+
+    //제품 삭제
+    /*@Transactional
+    public Map<String,Object> deleteCrawlingProduct(int crawlId) {
+        Map<String,Object> resultMap = new HashMap<>();
+
+        if (!crawlingRepository.existsById(crawlId)) {
+            resultMap.put("resultCode", 404);
+            resultMap.put("message", "crawlId를 찾을 수 없음 " + crawlId);
+            return resultMap;
+        }
+
+        try {
+            crawlingRepository.deleteById(crawlId); // 하드 삭제
+            resultMap.put("resultCode", 200);
+            resultMap.put("deletedId", crawlId);
+        } catch(Exception e) {
+            resultMap.put("resultCode", 500);
+        }
+
+        return resultMap;
+    }*/
+
+
+
+
+
+
+
+
 
 }

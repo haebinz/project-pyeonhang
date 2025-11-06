@@ -36,7 +36,7 @@ public class UserService {
         entity.setNickname(userRequest.getNickname());
         entity.setBirth(userRequest.getBirth());
         entity.setRole(userRequest.getRole());
-        UserRoleEntity role = userRoleRepository.findById("ROLE_USER")
+        UserRoleEntity role = userRoleRepository.findById("USER")
                 .orElseThrow(() -> new RuntimeException("기본 권한(USER)이 없습니다."));
         entity.setRole(role);
 
@@ -104,8 +104,6 @@ public class UserService {
         user.setPasswd(passwordEncoder.encode(newPassword));
         usersRepository.save(user);
     }
-
-
 
 
 

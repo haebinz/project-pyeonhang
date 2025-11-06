@@ -1,13 +1,13 @@
 package projecct.pyeonhang.banner.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import projecct.pyeonhang.banner.entity.BannerEntity;
 
-public interface BannerRepository extends JpaRepository<BannerEntity,Integer> {
+import java.util.Optional;
 
-    @EntityGraph(attributePaths = "file")
-    Page<BannerEntity> findAll(Pageable pageable);
+public interface BannerRepository extends JpaRepository<BannerEntity,Integer> {
+    @Query("SELECT b FROM BannerEntity b LEFT JOIN FETCH b.bannerFile WHERE b.bannerId = :id")
+    Optional<BannerEntity> findBannerWithFile(@Param("id") int id);
 }

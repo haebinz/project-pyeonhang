@@ -33,7 +33,7 @@ public class UsersEntity extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name="user_role")
-    @ColumnDefault("ROLE_USER")
+    @ColumnDefault("USER")
     private UserRoleEntity role;
 
     @PrePersist
