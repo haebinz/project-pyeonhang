@@ -4,7 +4,6 @@ package projecct.pyeonhang.crawling.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import projecct.pyeonhang.crawling.entity.CrawlingEntity;
@@ -13,30 +12,6 @@ import projecct.pyeonhang.crawling.entity.CrawlingEntity;
 import java.util.List;
 
 public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer> {
-
-    @Query("""
-      select c
-        from CrawlingEntity c
-       where (:sourceChain is null or lower(c.sourceChain) = lower(:sourceChain))
-         and (:promoType  is null or c.promoType = :promoType)
-         and (:productType is null or c.productType = :productType)
-         and (:productName is null or lower(c.productName) like lower(concat('%', :productName, '%')))
-    """)
-    Page<CrawlingEntity> filterAll(
-            @Param("sourceChain") String sourceChain,
-            @Param("promoType") CrawlingEntity.PromoType promoType,
-            @Param("productType") CrawlingEntity.ProductType productType,
-            @Param("productName") String productName,
-            Pageable pageable
-    );
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("update CrawlingEntity c set c.likeCount = c.likeCount + 1 where c.crawlId = :id")
-    int increaseLikeCount(@Param("id") int crawlId);
-
-    // 현재 like_count 가져오기(선택)
-    @Query("select c.likeCount from CrawlingEntity c where c.crawlId = :id")
-    Integer getLikeCount(@Param("id") int crawlId);
 
 
 
@@ -47,7 +22,6 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
     // 체인별
     List<CrawlingEntity> findTop10BySourceChainOrderByCrawlIdAsc(String sourceChain);
 
-    /*
     // 특정 체인 개수
     long countBySourceChain(String sourceChain);
     Page<CrawlingEntity> findBySourceChain(String sourceChain, Pageable pageable);
@@ -62,10 +36,6 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
     Page<CrawlingEntity> findBySourceChainAndProductType(
             String sourceChain, CrawlingEntity.ProductType productType, Pageable pageable);
 
-    Page<CrawlingEntity> findByPromoType(
-            CrawlingEntity.PromoType promoType, Pageable pageable
-    );
-
     //제품 검색
     @Query("""
         select c
@@ -76,7 +46,7 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
         """)
     Page<CrawlingEntity> searchProduct(@Param("sourceChain") String sourceChain,
                                        @Param("productName") String productName,
-                                       Pageable pageable);*/
+                                       Pageable pageable);
 
 
     CrawlingEntity getByCrawlId(int crawlId);

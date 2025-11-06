@@ -22,18 +22,7 @@ public class BannerEntity extends BaseTimeEntity {
     @Column( columnDefinition = "CHAR(1)")
     private String useYn;
 
-    @OneToOne(mappedBy = "banner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private BannerFileEntity file;
-
-    public void setFile(BannerFileEntity file) {
-        if (this.file != null) this.file.setBanner(null);
-        this.file = file;
-        if (file != null) file.setBanner(this);
-    }
-
-
-
-
-
+    @OneToOne(mappedBy = "banner", cascade = CascadeType.ALL)
+    private BannerFileEntity bannerFile;
 
 }

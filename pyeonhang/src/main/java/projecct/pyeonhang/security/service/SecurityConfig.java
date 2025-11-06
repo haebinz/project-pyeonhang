@@ -9,21 +9,31 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.HttpStatusAccessDeniedHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import projecct.pyeonhang.common.filter.CustomLogoutFilter;
+import projecct.pyeonhang.common.filter.JWTFilter;
+import projecct.pyeonhang.common.filter.LoginFilter;
 import projecct.pyeonhang.common.utils.JWTUtils;
+import projecct.pyeonhang.users.dto.UserSecureDTO;
 import projecct.pyeonhang.users.service.UserServiceDetails;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 import java.util.List;
 
@@ -63,15 +73,26 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        AuthenticationConfiguration configuration = http.getSharedObject(AuthenticationConfiguration.class);
+
+        // loginFilter에서 인증처리 하기 위한 매니저 생성
+        AuthenticationManager manager = this.authenticationManager(configuration);
+
+        LoginFilter loginFilter = new LoginFilter(manager, jwtUtils);
+        loginFilter.setFilterProcessesUrl("/api/v1/user/login");
 
         http.csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(this.configurationSource()))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 //인증/비인증 경로 처리
                 .authorizeHttpRequests(
                         auth ->
-                                auth.requestMatchers("/user/login").permitAll() // 인증처리 안함 패스
+                                auth.requestMatchers("/**").permitAll()
+                                        .requestMatchers("/user/login").permitAll() // 인증처리 안함 패스
+                                        .requestMatchers("/api/v1/user/login").permitAll() // 인증처리 안함 패스
                                         .requestMatchers("/user/login/error").permitAll()
                                         .requestMatchers("/user/logout/**").permitAll()
+                                        .requestMatchers("/user/add").permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                         .requestMatchers("/.well-known/**").permitAll()
                                         .requestMatchers("/favicon.ico").permitAll()
@@ -80,32 +101,17 @@ public class SecurityConfig {
                                         .requestMatchers("/crawl/**").permitAll()
                                         .requestMatchers("/static/**").permitAll()
                                         .requestMatchers("/files/**").permitAll()
+                                        // .anyRequest().authenticated()
                                         .anyRequest().permitAll()
-                                        //.anyRequest().authenticated()
-                )//로그인 처리
-                .formLogin(
-                        form ->
-                                form.loginPage("/user/login")  //내가만든 로그인 페이지 경로
-                                        .loginProcessingUrl("/login/proc")   // 로그인 처리 시작 경로
-
-                ).logout(
-                        out->
-                                out.logoutUrl("/logout")  // AntPathRequestMatcher 대신 직접 URL 사용
-                                        .invalidateHttpSession(true)  // spring session 제거
-                                        .deleteCookies("JSESSIONID") //세션 Id 제거
-                                        .clearAuthentication(true)  // 로그인 객체 삭제
-
                 )
-                .exceptionHandling(exp ->
-                        //비로그인 상태에서 api  호출 시 오류
-                        exp.defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                request -> request.getRequestURI().startsWith("/api/")
-                                //로그인이지만 권한 없은 api 호출 시 오류
-                        ).defaultAccessDeniedHandlerFor(
-                                new HttpStatusAccessDeniedHandler(HttpStatus.FORBIDDEN),
-                                request -> request.getRequestURI().startsWith("/api/")
-                        ));
+                // LoginFilter 전에 JWTFilter를 실행
+                .addFilterBefore(new JWTFilter(jwtUtils), LoginFilter.class)
+                // UsernamePasswordAuthenticationFilter 이거 대신 LoginFilter를 실행해라
+                .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new CustomLogoutFilter(jwtUtils), LogoutFilter.class)
+                // 세션 유지 안함
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .logout(withDefaults());
 
         return http.build();
     }
