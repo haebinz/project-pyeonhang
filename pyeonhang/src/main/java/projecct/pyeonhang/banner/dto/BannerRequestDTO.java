@@ -20,8 +20,8 @@ public class BannerRequestDTO {
     private String linkUrl;
     private String imgUrl;
 
-    // @NotBlank(message="배너 이미지를 등록해주세요")
-    private MultipartFile file;
+//    // @NotBlank(message="배너 이미지를 등록해주세요")
+//    private MultipartFile file;
 
     private String useYn;
 

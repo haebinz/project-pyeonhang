@@ -14,6 +14,7 @@ import projecct.pyeonhang.banner.entity.BannerEntity;
 import projecct.pyeonhang.banner.entity.BannerFileEntity;
 import projecct.pyeonhang.banner.repository.BannerFileRepository;
 import projecct.pyeonhang.banner.repository.BannerRepository;
+import projecct.pyeonhang.common.service.CloudinaryService;
 import projecct.pyeonhang.common.utils.FileUtils;
 
 import java.io.File;
@@ -25,6 +26,7 @@ public class BannerService {
     private final FileUtils fileUtils;
     private final BannerFileRepository bannerFileRepository;
     private final BannerRepository bannerRepository;
+    private final CloudinaryService cloudinaryService;
     
     //파일 업로드 지정
     @Value("${server.file.upload.path}")
@@ -55,25 +57,29 @@ public class BannerService {
             throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
         }
 
-        // 업로드
-        Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
-        if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
+        String imgUrl = cloudinaryService.uploadFile(file, fileName, ext);
+
+
+//        // 업로드
+//        Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
+//        if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
 
         // 배너 저장
         BannerEntity bannerEntity = new BannerEntity();
         bannerEntity.setTitle(request.getTitle());
         bannerEntity.setLinkUrl(request.getLinkUrl());
         bannerEntity.setUseYn("Y");
+        bannerEntity.setImgUrl(imgUrl);
         bannerRepository.save(bannerEntity);
 
-        // 파일 저장
-        BannerFileEntity bannerFileEntity = new BannerFileEntity();
-        bannerFileEntity.setBanner(bannerEntity);
-        bannerFileEntity.setFileName(fileMap.get("fileName").toString());
-        bannerFileEntity.setStoredName(fileMap.get("storedFileName").toString());
-        bannerFileEntity.setFilePath(filePath);
-        bannerFileEntity.setFileSize(getFileSize(filePath + bannerFileEntity.getStoredName()));
-        bannerFileRepository.save(bannerFileEntity);
+//        // 파일 저장
+//        BannerFileEntity bannerFileEntity = new BannerFileEntity();
+//        bannerFileEntity.setBanner(bannerEntity);
+//        bannerFileEntity.setFileName(fileMap.get("fileName").toString());
+//        bannerFileEntity.setStoredName(fileMap.get("storedFileName").toString());
+//        bannerFileEntity.setFilePath(filePath);
+//        bannerFileEntity.setFileSize(getFileSize(filePath + bannerFileEntity.getStoredName()));
+//        bannerFileRepository.save(bannerFileEntity);
     }
 
     private long getFileSize(String absolutePath) {

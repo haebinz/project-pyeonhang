@@ -19,6 +19,8 @@ public class BannerEntity extends BaseTimeEntity {
 
     private String linkUrl;
 
+    private String imgUrl;
+
     @Column( columnDefinition = "CHAR(1)")
     private String useYn;
 
