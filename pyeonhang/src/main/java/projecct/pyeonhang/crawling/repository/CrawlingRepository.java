@@ -4,6 +4,7 @@ package projecct.pyeonhang.crawling.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import projecct.pyeonhang.crawling.entity.CrawlingEntity;
@@ -28,6 +29,14 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
             @Param("productName") String productName,
             Pageable pageable
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update CrawlingEntity c set c.likeCount = c.likeCount + 1 where c.crawlId = :id")
+    int increaseLikeCount(@Param("id") int crawlId);
+
+    // 현재 like_count 가져오기(선택)
+    @Query("select c.likeCount from CrawlingEntity c where c.crawlId = :id")
+    Integer getLikeCount(@Param("id") int crawlId);
 
 
 
