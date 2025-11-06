@@ -28,13 +28,43 @@ public class CrawlingAPIController {
     private final CrawlingService crawlingService;
     private final CrawlingRepository crawlingRepository;
 
-    //실험용입니다!!!
+
+    @GetMapping({
+            "/crawl",
+            "/crawl/{sourceChain}",
+            "/crawl/{sourceChain}/{promoType}",
+            "/crawl/{sourceChain}/{promoType}/{productType}"
+    })
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getUnified(
+            @PathVariable(required = false) String sourceChain,
+            @PathVariable(required = false) String promoType,
+            @PathVariable(required = false) String productType,
+            @RequestParam(name = "q", required = false) String q,
+            @PageableDefault(size = 20, page = 0, sort = "price", direction = Sort.Direction.ASC)
+            Pageable pageable
+    ) {
+        Map<String,Object> result = crawlingService.getByUnifiedFilters(
+                sourceChain, promoType, productType, q, pageable
+        );
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    /*//실험용입니다!!!
     @GetMapping("/crawl") //전체 가져오기 -> 화면에 뜨는지 보기위해서 현재는 10개만 표시하도록
     public ResponseEntity<Map<String, Object>> getCrawlingAll() throws Exception {
         Map<String, Object> resultMap = crawlingService.getCrawlingAll();
         resultMap.put("총개수", crawlingRepository.count());
         return new ResponseEntity<>(resultMap, HttpStatus.OK);
+    }*/
+    //전체가져오기
+    /*@GetMapping("/crawl")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlAll( @PageableDefault(size=20,page=0,
+            sort="price",
+            direction = Sort.Direction.ASC) Pageable pageable) throws Exception{
+        Map<String,Object> resultMap = crawlingService.getAll(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
+
 
     
 
@@ -49,6 +79,7 @@ public class CrawlingAPIController {
         Map<String,Object> resultMap = crawlingService.getCrawlingBySourceChain(sourceChain,pageable);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
+
     //체인별 전체 상품->카테고리 고르기
     //ex)crawl/SEV/promo/SNACK
     @GetMapping("/crawl/{sourceChain}/promo/{productType}")
@@ -109,7 +140,9 @@ public class CrawlingAPIController {
 
         Map<String,Object> result = crawlingService.searchProducts(sourceChain, productName, pageable);
         return ResponseEntity.ok(ApiResponse.ok(result));
-    }
+    }*/
+
+
 
     //제품 상세
     @GetMapping("/crawl/detail/{crawlId}")

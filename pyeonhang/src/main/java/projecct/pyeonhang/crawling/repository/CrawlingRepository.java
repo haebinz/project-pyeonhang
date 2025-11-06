@@ -13,6 +13,22 @@ import java.util.List;
 
 public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer> {
 
+    @Query("""
+      select c
+        from CrawlingEntity c
+       where (:sourceChain is null or lower(c.sourceChain) = lower(:sourceChain))
+         and (:promoType  is null or c.promoType = :promoType)
+         and (:productType is null or c.productType = :productType)
+         and (:productName is null or lower(c.productName) like lower(concat('%', :productName, '%')))
+    """)
+    Page<CrawlingEntity> filterAll(
+            @Param("sourceChain") String sourceChain,
+            @Param("promoType") CrawlingEntity.PromoType promoType,
+            @Param("productType") CrawlingEntity.ProductType productType,
+            @Param("productName") String productName,
+            Pageable pageable
+    );
+
 
 
 
@@ -22,6 +38,7 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
     // 체인별
     List<CrawlingEntity> findTop10BySourceChainOrderByCrawlIdAsc(String sourceChain);
 
+    /*
     // 특정 체인 개수
     long countBySourceChain(String sourceChain);
     Page<CrawlingEntity> findBySourceChain(String sourceChain, Pageable pageable);
@@ -50,7 +67,7 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
         """)
     Page<CrawlingEntity> searchProduct(@Param("sourceChain") String sourceChain,
                                        @Param("productName") String productName,
-                                       Pageable pageable);
+                                       Pageable pageable);*/
 
 
     CrawlingEntity getByCrawlId(int crawlId);
