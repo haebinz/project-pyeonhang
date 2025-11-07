@@ -17,12 +17,16 @@ public class CloudinaryService implements CloudService {
         this.cloudinary = cloudinary;
     }
 
+    /*
+        file: 파일,
+        folder: 저장할 폴더 이름
+        publicId : 저장할 파일 이름
+     */
     @Override
     public String uploadFile(MultipartFile file, String folder, String publicId) throws Exception {
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
                 "folder", folder,
-                "public_id", publicId,
-                "overwrite", true
+                "public_id", publicId
         ));
         return uploadResult.get("secure_url").toString();
     }

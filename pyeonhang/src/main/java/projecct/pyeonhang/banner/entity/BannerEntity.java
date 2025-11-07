@@ -21,6 +21,8 @@ public class BannerEntity extends BaseTimeEntity {
 
     private String imgUrl;
 
+    private String cloudinaryId;
+
     @Column( columnDefinition = "CHAR(1)")
     private String useYn;
 

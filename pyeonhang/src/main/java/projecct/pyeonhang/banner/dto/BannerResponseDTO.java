@@ -28,7 +28,7 @@ public class BannerResponseDTO {
                 .bannerId(entity.getBannerId())
                 .title(entity.getTitle())
                 .linkUrl(entity.getLinkUrl())
-                .imgUrl(entity.getBannerFile().getStoredName())
+                .imgUrl(entity.getImgUrl())
                 .useYn(entity.getUseYn())
                 .build();
     }

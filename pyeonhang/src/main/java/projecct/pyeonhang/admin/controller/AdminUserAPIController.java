@@ -90,75 +90,41 @@ public class AdminUserAPIController {
 
     @PostMapping("/admin/banner")
     public ResponseEntity<Map<String, Object>> registerBanner(
-            @RequestPart("data") String data,
+            @RequestPart("data") List<BannerRequestDTO> bannerList,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
         HttpStatus status = HttpStatus.OK;
 
-        Map<String, Object> response = new HashMap<>();
-        List<Map<String, Object>> resultDetails = new ArrayList<>();
         try {
-            // JSON 문자열 -> DTO 리스트
-            ObjectMapper mapper = new ObjectMapper();
-            List<BannerRequestDTO> bannerList = mapper.readValue(data, new TypeReference<List<BannerRequestDTO>>() {});
-            int successCount = 0;
-
-            for (int i = 0; i < bannerList.size(); i++) {
-                BannerRequestDTO banner = bannerList.get(i);
-                MultipartFile file = (files != null && files.size() > i) ? files.get(i) : null;
-                banner.setFile(file);
-                try {
-                    // 배너 아이디 없으면 새 배너 등록
-                    if (banner.getBannerId() == null) {
-                        if(file == null) {
-                            throw new IllegalArgumentException("등록 배너는 파일이 필요합니다.");
-                        }
-                        bannerService.registerBanner(banner);
-                        // 기존 배너 업데이트
-                    } else {
-                        bannerService.updateBanner(banner.getBannerId(), banner);
-                    }
-                    resultDetails.add(Map.of("index", i, "status", "SUCCESS"));
-                    successCount++;
-                } catch (Exception e) {
-                    resultDetails.add(Map.of(
-                            "index", i,
-                            "status", "FAIL",
-                            "message", e.getMessage()
-                    ));
-                }
-            }
-
+            bannerService.saveOrUpdateBanners(bannerList, files);
             resultMap.put("resultCode", 200);
             resultMap.put("resultMessage", "OK");
-            resultMap.put("resultDetails", resultDetails);
 
         } catch (Exception e) {
             resultMap.put("resultCode", 500);
             resultMap.put("resultMessage", "FAIL");
-            resultMap.put("message", resultDetails);
             throw new Exception(e.getMessage() == null ? "배너 등록 실패" : e.getMessage());
-
         }
         return new ResponseEntity<>(resultMap, status);
     }
 
     @DeleteMapping("/admin/banner/{bannerId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteBanner(
+    public ResponseEntity<Map<String, Object>> deleteBanner(
             @PathVariable int bannerId
     ) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
+        HttpStatus status = HttpStatus.OK;
+        log.info("배너 삭제요청");
         try{
             bannerService.deleteBanner(bannerId);
             resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
-            resultMap.put("삭제된BannerId", bannerId);
         }catch (Exception e){
             resultMap.put("resultCode", 500);
+            status = HttpStatus.FAILED_DEPENDENCY;
             resultMap.put("resultMessage", e.getMessage());
         }
-        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+        return new ResponseEntity<>(resultMap, status);
     }
 
 
