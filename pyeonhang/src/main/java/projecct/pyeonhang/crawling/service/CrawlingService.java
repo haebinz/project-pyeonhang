@@ -269,7 +269,7 @@ public class CrawlingService {
         }
 
         try {
-            crawlingRepository.deleteById(crawlId); // 하드 삭제
+            crawlingRepository.deleteById(crawlId); // db에서 삭제
             resultMap.put("resultCode", 200);
             resultMap.put("deletedId", crawlId);
         } catch(Exception e) {

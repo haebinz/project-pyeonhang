@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import projecct.pyeonhang.common.dto.ApiResponse;
+import projecct.pyeonhang.point.service.PointsService;
 import projecct.pyeonhang.users.dto.*;
 import projecct.pyeonhang.users.service.UserService;
 import projecct.pyeonhang.wishlist.service.WishListService;
@@ -25,6 +26,7 @@ public class UserAPIController {
 
     private final UserService userService;
     private final WishListService wishListService;
+    private final PointsService pointsService;
     //사용자 가입
     @PostMapping("/user/add")
     public ResponseEntity<Map<String,Object>> addUser(@Valid @ModelAttribute UserRequest request)
@@ -158,7 +160,7 @@ public class UserAPIController {
         res.put("resultMessage", "PASSWORD_CHANGED");
         return ResponseEntity.ok(res);
     }
-    //찜목록추가
+    //(로그인 기준)찜목록추가
     @PostMapping("/user/wish")
     public ResponseEntity<ApiResponse<Map<String, Object>>> addMyWish(
             @RequestParam int crawlId,
@@ -176,7 +178,7 @@ public class UserAPIController {
 
 
 
-    //찜 목록 가져오기
+    //(로그인 기준)찜 목록 가져오기
     @GetMapping("/user/wish")
     public ResponseEntity<ApiResponse<Map<String, Object>>> listMyWish(
             @AuthenticationPrincipal(expression = "username")
@@ -190,7 +192,7 @@ public class UserAPIController {
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
 
-    //찜 목록에서 삭제
+    //(로그인 기준)찜 목록에서 삭제
     @DeleteMapping("/user/wish")
     public ResponseEntity<ApiResponse<Map<String, Object>>> removeMyWish(
             @RequestParam int crawlId,
@@ -203,6 +205,19 @@ public class UserAPIController {
         }
         Map<String, Object> res = wishListService.removeWish(principalUserId, crawlId);
         return ResponseEntity.ok(ApiResponse.ok(res));
+    }
+
+    //(로그인 기준) 포인트 리스트 가져오기
+    @GetMapping("/user/points")
+    public ResponseEntity<Map<String, Object>> myPoints(
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED"));
+        }
+        Map<String, Object> resultMap = pointsService.listMyPoints(principalUserId);
+        return ResponseEntity.ok(resultMap);
     }
 
 

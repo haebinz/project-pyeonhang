@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(name="points")
 public class PointsEntity extends BaseTimeEntity {
-    public enum SourceType {ADMIN_GRANT,ATTENDANCE}
+    public enum SourceType {ADMIN_GRANT,ATTENDANCE,COUPON_EXCHANGE}
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

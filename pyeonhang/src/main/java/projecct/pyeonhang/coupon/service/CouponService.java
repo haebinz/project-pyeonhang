@@ -16,6 +16,8 @@ import projecct.pyeonhang.coupon.entity.CouponEntity;
 import projecct.pyeonhang.coupon.entity.CouponFileEntity;
 import projecct.pyeonhang.coupon.repository.CouponFileRepository;
 import projecct.pyeonhang.coupon.repository.CouponRepository;
+import projecct.pyeonhang.users.entity.UsersEntity;
+import projecct.pyeonhang.users.repository.UsersRepository;
 
 
 import java.io.File;
@@ -27,6 +29,7 @@ public class CouponService {
     private final FileUtils fileUtils;
     private final CouponRepository couponRepository;
     private final CouponFileRepository couponFileRepository;
+    private final UsersRepository usersRepository;
 
     //파일 업로드 지정
     @Value("${server.file.coupon.path}")
@@ -161,7 +164,7 @@ public class CouponService {
         return resultMap;
     }
 
-
+    //쿠폰리스트 전체 가져오기(관리자)
     @Transactional(readOnly = true)
     public Map<String,Object> getCouponList(Pageable pageable) {
         Map<String,Object> resultMap = new HashMap<>();
@@ -180,5 +183,26 @@ public class CouponService {
         return resultMap;
     }
 
+    //쿠폰교환(사용자)
+    @Transactional
+    public Map<String,Object> exchangeCoupon(String userId,int couponId) throws Exception {
+        Map<String,Object> resultMap = new HashMap<>();
+        UsersEntity users = new UsersEntity();
+        CouponEntity coupon = new CouponEntity();
+        try {
+            users=usersRepository.findById(userId).orElseThrow(()->new IllegalArgumentException("사용자가 없습니다"));
+            resultMap.put("users", users);
+            resultMap.put("resultCode", 200);
+            resultMap.put("resultMessage", "OK");
+            coupon=couponRepository.findById(couponId).orElseThrow(()->new IllegalArgumentException("쿠폰이 없습니다"));
+            resultMap.put("coupon", coupon);
+            resultMap.put("description", coupon.getDescription());
+            resultMap.put("requiredPoint", coupon.getRequiredPoint());
+
+        }catch (Exception e){
+
+        }
+        return resultMap;
+    }
 
 }
