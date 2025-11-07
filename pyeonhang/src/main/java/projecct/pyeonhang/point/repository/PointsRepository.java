@@ -5,4 +5,5 @@ import projecct.pyeonhang.point.entity.PointsEntity;
 
 public interface PointsRepository extends JpaRepository<PointsEntity, Integer> {
 
+    Integer id(int id);
 }

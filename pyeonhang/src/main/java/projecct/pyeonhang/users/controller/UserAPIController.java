@@ -1,11 +1,13 @@
 package projecct.pyeonhang.users.controller;
 
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.users.dto.*;
@@ -23,7 +25,7 @@ public class UserAPIController {
 
     private final UserService userService;
     private final WishListService wishListService;
-
+    //사용자 가입
     @PostMapping("/user/add")
     public ResponseEntity<Map<String,Object>> addUser(@Valid @ModelAttribute UserRequest request)
             throws Exception{
@@ -39,25 +41,59 @@ public class UserAPIController {
         }
         return new ResponseEntity<>(resultMap,status);
     }
+    //(로그인 기준)자기 정보 가져오기
+    @GetMapping("/user/info")
+    public ResponseEntity<Map<String, Object>> userInfo(
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED"));
+        }
 
-
-    //사용자 수정
-    @PutMapping("/user/{userId}")
-    public ResponseEntity<Map<String,Object>> updateUser(
-            @PathVariable String userId,
-            @Valid @ModelAttribute UserUpdateRequest request) throws Exception {
+        UserDTO me = userService.findMe(principalUserId);
 
         Map<String, Object> resultMap = new HashMap<>();
-        try {
-            userService.updateUser(userId, request);
-            resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
-            return ResponseEntity.ok(resultMap);
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
+        resultMap.put("userId",   me.getUserId());
+        resultMap.put("username", me.getUserName());
+        resultMap.put("email",    me.getEmail());
+        resultMap.put("phone",    me.getPhone());
+        resultMap.put("nickname", me.getNickname());
+        resultMap.put("birth",    me.getBirth());
+
+        return ResponseEntity.ok(resultMap);
     }
 
+    //(로그인 기준)사용자 수정
+    @PutMapping("/user/info")
+    public ResponseEntity<Map<String, Object>> updateUser(
+            @AuthenticationPrincipal(expression = "username") String principalUserId,
+            @ModelAttribute @Valid UserUpdateRequest request
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED"));
+        }
+        userService.updateUser(principalUserId, request);
+        return new ResponseEntity<>(Map.of("resultCode", 200, "resultMessage", "OK"), HttpStatus.OK);
+    }
+    //(로그인 기준)비밀번호 수정
+    @PutMapping("/user/password/change")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @AuthenticationPrincipal(expression = "username") String principalUserId,
+            @Valid @ModelAttribute UserPasswordResetRequest request
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED"));
+        }
+        userService.changeMyPassword(principalUserId,request);
+        return ResponseEntity.ok(Map.of("resultCode", 200, "resultMessage", "PASSWORD_CHANGED"));
+    }
+
+
+
+    //(비로그인)아이디 찾기
     @GetMapping("/user/findId")
     public ResponseEntity<Map<String, Object>> findUserId(@Valid @ModelAttribute UserFindRequest request) throws Exception {
         try {
@@ -68,7 +104,8 @@ public class UserAPIController {
             throw new Exception(e.getMessage());
         }
     }
-
+    /*
+    //(비로그인)비밀번호 찾기
     @GetMapping("/user/findUser")
     public ResponseEntity<Map<String, Object>> findUserForPasswd(@Valid @ModelAttribute UserPasswordRequest request) throws Exception {
         try{
@@ -79,7 +116,9 @@ public class UserAPIController {
             throw new Exception(e.getMessage());
         }
     }
+    */
 
+    //(비로그인 기준)이메일로 인증
     @PostMapping("/user/password/verify")
     public ResponseEntity<Map<String, Object>> verifyIdEmail(
             @Valid @ModelAttribute UserPasswordRequest request,
@@ -97,11 +136,11 @@ public class UserAPIController {
         return ResponseEntity.ok(res);
     }
 
-
+    //(비로그인 기준)비밀번호 초기화
     @PostMapping("/user/password/reset")
     public ResponseEntity<Map<String, Object>> resetPassword(
             @Valid @ModelAttribute UserPasswordResetRequest request,
-            jakarta.servlet.http.HttpSession session
+            HttpSession session
     ) {
         // 1단계에서 저장한 사용자 아이디 가져오기
         String userId = (String) session.getAttribute("PWD_RESET_USER");
@@ -119,33 +158,53 @@ public class UserAPIController {
         res.put("resultMessage", "PASSWORD_CHANGED");
         return ResponseEntity.ok(res);
     }
-
-
-    @PostMapping("/{userId}/wish")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> add(
-            @PathVariable String userId,
-            @RequestParam int crawlId
+    //찜목록추가
+    @PostMapping("/user/wish")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> addMyWish(
+            @RequestParam int crawlId,
+            @AuthenticationPrincipal(expression = "username")
+            String principalUserId
     ) {
-        Map<String, Object> res = wishListService.addWish(userId, crawlId);
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.ok(new HashMap<>()));
+        }
+        Map<String, Object> res = wishListService.addWish(principalUserId, crawlId);
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
 
-    @GetMapping("/{userId}/wish")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> list(
-            @PathVariable String userId
+
+
+
+    //찜 목록 가져오기
+    @GetMapping("/user/wish")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> listMyWish(
+            @AuthenticationPrincipal(expression = "username")
+            String principalUserId
     ) {
-        Map<String, Object> res = wishListService.listMyWish(userId);
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.ok(new HashMap<>()));
+        }
+        Map<String, Object> res = wishListService.listMyWish(principalUserId);
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
 
-    @DeleteMapping("/{userId}/wish")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> remove(
-            @PathVariable String userId,
-            @RequestParam int crawlId
+    //찜 목록에서 삭제
+    @DeleteMapping("/user/wish")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> removeMyWish(
+            @RequestParam int crawlId,
+            @AuthenticationPrincipal(expression = "username")
+            String principalUserId
     ) {
-        Map<String, Object> res = wishListService.removeWish(userId, crawlId);
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.ok(new HashMap<>()));
+        }
+        Map<String, Object> res = wishListService.removeWish(principalUserId, crawlId);
         return ResponseEntity.ok(ApiResponse.ok(res));
     }
+
 
 
 

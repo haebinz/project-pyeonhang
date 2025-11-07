@@ -49,6 +49,28 @@ public class CrawlingAPIController {
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
+    //원하는 행사유형 입력 ex)crawl/promo/ONE_PLUS_ONE
+    @GetMapping("/crawl/promo/{promoType}")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlingByPromoType(
+            @PathVariable CrawlingEntity.PromoType promoType,
+            @PageableDefault(size=5,page=0,
+                    sort="price",
+                    direction=Sort.Direction.ASC) Pageable pageable){
+        Map<String,Object> resultMap= crawlingService.getCrawlingByPromoType(promoType,pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }
+
+    /*    //체인별 전체 상품
+    //ex)api/v1/crawl/chain/SEV
+    @GetMapping("/crawl/chain/{sourceChain}")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getChain(@PathVariable String sourceChain,
+                                                                    @PageableDefault(size=20,page=0,
+                                                                    sort="price",
+                                                                            direction = Sort.Direction.ASC) Pageable pageable) throws Exception {
+        Map<String,Object> resultMap = crawlingService.getCrawlingBySourceChain(sourceChain,pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }*/
+
     /*//실험용입니다!!!
     @GetMapping("/crawl") //전체 가져오기 -> 화면에 뜨는지 보기위해서 현재는 10개만 표시하도록
     public ResponseEntity<Map<String, Object>> getCrawlingAll() throws Exception {

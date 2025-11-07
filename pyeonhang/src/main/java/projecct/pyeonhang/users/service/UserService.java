@@ -6,9 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import projecct.pyeonhang.users.dto.UserPasswordRequest;
-import projecct.pyeonhang.users.dto.UserRequest;
-import projecct.pyeonhang.users.dto.UserUpdateRequest;
+import projecct.pyeonhang.users.dto.*;
 import projecct.pyeonhang.users.entity.UserRoleEntity;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UserRoleRepository;
@@ -43,6 +41,15 @@ public class UserService {
         usersRepository.save(entity);
     }
 
+    @Transactional(readOnly = true)
+    public UserDTO findMe(String userId) {
+        UsersEntity entity = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        UserDTO dto = UserDTO.of(entity);
+        dto.setPasswd(null);
+        return dto;
+    }
+
     //사용자 정보 수정
     @Transactional
     public void updateUser(String userId,UserUpdateRequest request) {
@@ -55,11 +62,24 @@ public class UserService {
         if (request.getPhone()    != null) entity.setPhone(request.getPhone());
         if (request.getEmail()    != null) entity.setEmail(request.getEmail());
         if (request.getNickname()    != null) entity.setNickname(request.getNickname());
-        if (request.getPasswd()    != null) entity.setPasswd(passwordEncoder.encode(request.getPasswd()));
+        //if (request.getPasswd()    != null) entity.setPasswd(passwordEncoder.encode(request.getPasswd()));
 
 
         usersRepository.save(entity);
     }
+    //비밀번호 수정
+    @Transactional
+    public void changeMyPassword(String userId, UserPasswordResetRequest request) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+          
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("새 비밀번호와 확인이 일치하지 않습니다.");
+        }
+
+        user.setPasswd(passwordEncoder.encode(request.getNewPassword()));
+    }
+
 
     //사용자 아이디 찾기
     @Transactional(readOnly = true)

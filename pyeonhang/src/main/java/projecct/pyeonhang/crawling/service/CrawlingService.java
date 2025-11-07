@@ -186,7 +186,7 @@ public class CrawlingService {
 
         return resultMap;
     }*/
-    /*
+
     //행사 유형별 가져오기
     public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
         Map<String,Object> resultMap = new HashMap<>();
@@ -204,7 +204,7 @@ public class CrawlingService {
 
         return resultMap;
     }
-
+    /*
     //카테고리별 가져오기
     public Map<String,Object> getCrawlingBySourceAndProductType(String sourceChain,
                                                                 CrawlingEntity.PromoType promoType,

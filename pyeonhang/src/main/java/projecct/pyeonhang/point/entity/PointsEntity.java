@@ -24,7 +24,7 @@ public class PointsEntity extends BaseTimeEntity {
 
     //'사용자 아이디'
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")     // FK(users.user_id)
+    @JoinColumn(name = "user_id")
     private UsersEntity user;
 
     //'포인트 지급 유형'
