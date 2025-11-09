@@ -12,8 +12,7 @@ import projecct.pyeonhang.common.entity.BaseTimeEntity;
 public class BannerEntity extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int bannerId;
+    private String bannerId;
 
     private String title;
 
@@ -21,7 +20,7 @@ public class BannerEntity extends BaseTimeEntity {
 
     private String imgUrl;
 
-    private String cloudinaryId;
+    private Integer bannerOrder;
 
     @Column( columnDefinition = "CHAR(1)")
     private String useYn;

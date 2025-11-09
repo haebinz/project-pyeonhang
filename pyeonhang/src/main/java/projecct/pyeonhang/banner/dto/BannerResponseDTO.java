@@ -1,8 +1,6 @@
 package projecct.pyeonhang.banner.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
 import projecct.pyeonhang.banner.entity.BannerEntity;
 
 @Getter
@@ -12,7 +10,7 @@ import projecct.pyeonhang.banner.entity.BannerEntity;
 @AllArgsConstructor
 public class BannerResponseDTO {
 
-    private int bannerId;
+    private String bannerId;
 
     private String title;
 
@@ -22,6 +20,8 @@ public class BannerResponseDTO {
 
     private String useYn;
 
+    private Integer bannerOrder;
+
     public static BannerResponseDTO of(BannerEntity entity) {
 
         return BannerResponseDTO.builder()
@@ -30,6 +30,7 @@ public class BannerResponseDTO {
                 .linkUrl(entity.getLinkUrl())
                 .imgUrl(entity.getImgUrl())
                 .useYn(entity.getUseYn())
+                .bannerOrder(entity.getBannerOrder())
                 .build();
     }
 }

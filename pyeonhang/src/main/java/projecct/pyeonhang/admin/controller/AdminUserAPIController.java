@@ -1,8 +1,5 @@
 package projecct.pyeonhang.admin.controller;
 
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,22 +10,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import projecct.pyeonhang.admin.dto.AdminPointUpdateRequest;
 import projecct.pyeonhang.admin.dto.AdminUserDTO;
 import projecct.pyeonhang.admin.dto.AdminUserSearchDTO;
 import projecct.pyeonhang.admin.dto.AdminUserUpdateRequest;
 import projecct.pyeonhang.admin.service.AdminUserService;
 import projecct.pyeonhang.banner.dto.BannerRequestDTO;
 import projecct.pyeonhang.banner.dto.BannerResponseDTO;
-import projecct.pyeonhang.banner.repository.BannerRepository;
 import projecct.pyeonhang.banner.service.BannerService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.coupon.dto.CouponRequestDTO;
 import projecct.pyeonhang.coupon.dto.CouponUpdateDTO;
 import projecct.pyeonhang.coupon.service.CouponService;
 
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +35,6 @@ public class AdminUserAPIController {
 
     private final AdminUserService userService;
     private final BannerService bannerService;
-    private final BannerRepository bannerRepository;
     private final CouponService couponService;
 
 
@@ -84,24 +76,30 @@ public class AdminUserAPIController {
 
     }
 
-    @GetMapping("/admin/banner")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getBannerList() throws Exception {
+    @GetMapping("/admin/Allbanner")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getAllBannerList() throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
         List<BannerResponseDTO> list = bannerService.getAllBanner();
-        HttpStatus status = HttpStatus.OK;
+        resultMap.put("data", list);
+
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+    }
+
+        @GetMapping("/admin/useBanner")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getUseBannerList() throws Exception {
+        Map<String, Object> resultMap = new HashMap<>();
+        List<BannerResponseDTO> list = bannerService.getUseYBanner();
         resultMap.put("data", list);
 
         return ResponseEntity.ok(ApiResponse.ok(resultMap));
     }
 
     @PostMapping("/admin/banner")
-    public ResponseEntity<Map<String, Object>> registerBanner(
+    public ResponseEntity<ApiResponse<Map<String,Object>>> registerBanner(
             @RequestPart("data") List<BannerRequestDTO> bannerList,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
-        HttpStatus status = HttpStatus.OK;
-
         try {
             bannerService.saveOrUpdateBanners(bannerList, files);
             resultMap.put("resultCode", 200);
@@ -112,25 +110,23 @@ public class AdminUserAPIController {
             resultMap.put("resultMessage", "FAIL");
             throw new Exception(e.getMessage() == null ? "배너 등록 실패" : e.getMessage());
         }
-        return new ResponseEntity<>(resultMap, status);
+
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
     }
 
     @DeleteMapping("/admin/banner/{bannerId}")
-    public ResponseEntity<Map<String, Object>> deleteBanner(
-            @PathVariable int bannerId
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteBanner(
+            @PathVariable String bannerId
     ) throws Exception {
+        log.info("배너 삭제요청 - bannerId: {}", bannerId);
+        
+        bannerService.deleteBanner(bannerId);
+        
         Map<String, Object> resultMap = new HashMap<>();
-        HttpStatus status = HttpStatus.OK;
-        log.info("배너 삭제요청");
-        try{
-            bannerService.deleteBanner(bannerId);
-            resultMap.put("resultCode", 200);
-        }catch (Exception e){
-            resultMap.put("resultCode", 500);
-            status = HttpStatus.FAILED_DEPENDENCY;
-            resultMap.put("resultMessage", e.getMessage());
-        }
-        return new ResponseEntity<>(resultMap, status);
+        resultMap.put("resultCode", 200);
+        resultMap.put("resultMessage", "배너가 성공적으로 삭제되었습니다.");
+        
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
     }
 
     //쿠폰 목록

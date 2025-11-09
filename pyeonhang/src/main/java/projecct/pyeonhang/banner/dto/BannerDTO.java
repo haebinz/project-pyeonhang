@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BannerDTO {
 
-    private Integer bannerId;
+    private String bannerId;
     private String title;
     private String linkUrl;
     private String useYn;
