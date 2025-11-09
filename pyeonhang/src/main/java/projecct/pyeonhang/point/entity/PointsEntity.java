@@ -17,14 +17,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(name="points")
 public class PointsEntity extends BaseTimeEntity {
-    public enum SourceType {ADMIN_GRANT,ATTENDANCE}
+    public enum SourceType {ADMIN_GRANT,ATTENDANCE,COUPON_EXCHANGE}
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     //'사용자 아이디'
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")     // FK(users.user_id)
+    @JoinColumn(name = "user_id")
     private UsersEntity user;
 
     //'포인트 지급 유형'

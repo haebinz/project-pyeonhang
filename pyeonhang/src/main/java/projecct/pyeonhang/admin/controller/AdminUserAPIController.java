@@ -3,6 +3,7 @@ package projecct.pyeonhang.admin.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,10 @@ import projecct.pyeonhang.banner.dto.BannerResponseDTO;
 import projecct.pyeonhang.banner.repository.BannerRepository;
 import projecct.pyeonhang.banner.service.BannerService;
 import projecct.pyeonhang.common.dto.ApiResponse;
+import projecct.pyeonhang.coupon.dto.CouponRequestDTO;
+import projecct.pyeonhang.coupon.dto.CouponUpdateDTO;
+import projecct.pyeonhang.coupon.service.CouponService;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +43,8 @@ public class AdminUserAPIController {
     private final AdminUserService userService;
     private final BannerService bannerService;
     private final BannerRepository bannerRepository;
+    private final CouponService couponService;
+
 
     //회원 리스트 가져오기
     @GetMapping("/admin/user")
@@ -57,13 +64,12 @@ public class AdminUserAPIController {
     }
     //회원 정보 수정(포인트)
     @PatchMapping("/admin/{userId}/points")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> updateUserPoint(
+    public ResponseEntity<ApiResponse<Map<String,Object>>> updateUserPointForm(
             @PathVariable String userId,
-            @RequestBody AdminPointUpdateRequest request
+            @RequestParam("amount") int amount,
+            @RequestParam(value = "reason", required = false) String reason
     ) {
-        Map<String, Object> result = userService.grantPoints(
-                userId, request.getAmount(), request.getReason()
-        );
+        Map<String, Object> result = userService.grantPoints(userId, amount, reason);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
@@ -125,6 +131,69 @@ public class AdminUserAPIController {
             resultMap.put("resultMessage", e.getMessage());
         }
         return new ResponseEntity<>(resultMap, status);
+    }
+
+    //쿠폰 목록
+    @GetMapping("/admin/coupon")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getCouponList(
+            @PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        Map<String, Object> resultMap = couponService.getCouponList(pageable);
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+    }
+
+
+    //쿠폰 등록
+    @PostMapping("/admin/coupon")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> registerCoupon(
+            @Valid @ModelAttribute CouponRequestDTO request
+    ) throws Exception{
+        Map<String, Object> resultMap = new HashMap<>();
+
+        try{
+            couponService.registerCoupon(request);
+            resultMap.put("resultCode", 200);
+            resultMap.put("resultMessage", "OK");
+        } catch (Exception e){
+            throw new Exception(e.getMessage() == null ? "쿠폰등록 실패" : e.getMessage());
+        }
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+    }
+
+    //쿠폰 수정
+    @PutMapping("/admin/coupon/{couponId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateCoupon(
+            @PathVariable int couponId,
+            @ModelAttribute CouponUpdateDTO update
+    ) throws Exception{
+        Map<String, Object> resultMap = new HashMap<>();
+        try{
+            couponService.updateCoupon(couponId, update);
+            resultMap.put("resultCode", 200);
+            resultMap.put("resultMessage", "OK");
+        }catch (Exception e){
+            resultMap.put("resultCode", 500);
+            resultMap.put("resultMessage", e.getMessage());
+        }
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+    }
+
+    //쿠폰 삭제
+    @DeleteMapping("/admin/coupon/{couponId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteCoupon(
+            @PathVariable int couponId
+    )throws Exception{
+        Map<String,Object> resultMap = new HashMap<>();
+        try{
+            couponService.deleteCoupon(couponId);
+            resultMap.put("resultCode", 200);
+            resultMap.put("resultMessage", "OK");
+        }catch (Exception e){
+            resultMap.put("resultCode", 500);
+            resultMap.put("resultMessage", e.getMessage());
+        }
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
     }
 
 

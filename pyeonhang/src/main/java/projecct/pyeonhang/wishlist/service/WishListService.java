@@ -47,10 +47,10 @@ public class WishListService {
                 .orElseThrow(() -> new IllegalArgumentException("상품 없음(crawl): " + crawlId));
 
         WishListEntity entity = WishListEntity.of(user, product);
-        // 위시 저장
+        
         wishListRepository.save(entity);
 
-        // ★ 트리거 없이 직접 증가
+        //좋아요 증가
         int updated = crawlingRepository.increaseLikeCount(crawlId);
         if (updated != 1) {
             throw new IllegalStateException("like_count 증가 실패(crawlId=" + crawlId + ")");
@@ -64,7 +64,7 @@ public class WishListService {
         resultMap.put("likeCount", likeCount);
         return resultMap;
     }
-
+    //찜목록 가져오기
     @Transactional(readOnly = true)
     public Map<String, Object> listMyWish(String userId) {
         List<WishListEntity> list = wishListRepository.findByUser_UserId(userId);
@@ -90,34 +90,34 @@ public class WishListService {
         return resultMap;
     }
 
-
+    //찜삭제
     @Transactional
     public Map<String, Object> removeWish(String userId, int crawlId) {
-        Map<String,Object> res = new HashMap<>();
+        Map<String,Object> resultMap = new HashMap<>();
 
-        // 존재 여부 체크 (선택) — 없으면 조용히 OK로 가거나 에러로 처리할지 정책 선택
+
         boolean exists = wishListRepository.existsByUser_UserIdAndProduct_CrawlId(userId, crawlId);
         if (!exists) {
-            // 없는 경우도 OK 처리(멱등성) — 프론트 편함
-            res.put("resultCode", 200);
-            res.put("resultMessage", "ALREADY_REMOVED_OR_NOT_FOUND");
-            res.put("crawlId", crawlId);
-            // like_count는 내리지 않으므로 조회만 (선택)
+
+            resultMap.put("resultCode", 200);
+            resultMap.put("resultMessage", "ALREADY_REMOVED_OR_NOT_FOUND");
+            resultMap.put("crawlId", crawlId);
+            // like_count는 내리지 않으므로 조회만
             Integer likeCount = crawlingRepository.getLikeCount(crawlId);
-            res.put("likeCount", likeCount);
-            return res;
+            resultMap.put("likeCount", likeCount);
+            return resultMap;
         }
 
-        // 실제 삭제
+        //삭제
         wishListRepository.deleteByUser_UserIdAndProduct_CrawlId(userId, crawlId);
 
-        // like_count는 줄이지 않음(요구사항)
+        // like_count는 변동x
         Integer likeCount = crawlingRepository.getLikeCount(crawlId); // 참고용
 
-        res.put("resultCode", 200);
-        res.put("resultMessage", "REMOVED");
-        res.put("crawlId", crawlId);
-        res.put("likeCount", likeCount);
-        return res;
+        resultMap.put("resultCode", 200);
+        resultMap.put("resultMessage", "REMOVED");
+        resultMap.put("crawlId", crawlId);
+        resultMap.put("likeCount", likeCount);
+        return resultMap;
     }
 }
