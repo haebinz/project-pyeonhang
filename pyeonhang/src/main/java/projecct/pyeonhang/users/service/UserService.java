@@ -25,6 +25,11 @@ public class UserService {
 
     //사용자 추가
     public void addUser(UserRequest userRequest) throws Exception{
+        boolean exists = usersRepository.existsByUserId(userRequest.getUserId());
+        if (exists) {
+            throw new IllegalStateException("이미 존재하는 아이디입니다.");
+        }
+
         UsersEntity entity = new UsersEntity();
         entity.setUserId(userRequest.getUserId());
         entity.setUserName(userRequest.getUserName());

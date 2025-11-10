@@ -1,10 +1,11 @@
-// com.convenience.board.entity.BoardComment.java
-package com.convenience.board.entity;
+// projecct.pyeonhang.board.entity.BoardComment.java
+package projecct.pyeonhang.board.entity;
 
-import com.convenience.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import projecct.pyeonhang.common.entity.BaseTimeEntity;
+import projecct.pyeonhang.users.entity.UsersEntity;
 
 import java.time.LocalDateTime;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "board_comment")
 @Getter
 @Setter
-public class BoardComment {
+public class BoardComment extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,18 +26,12 @@ public class BoardComment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UsersEntity user;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "del_yn", length = 1)
+    @Column(name = "del_yn", columnDefinition = "CHAR(1)")
     private String delYn = "N";
-
-    @Column(name = "create_date")
-    private LocalDateTime createDate = LocalDateTime.now();
-
-    @Column(name = "update_date")
-    private LocalDateTime updateDate;
 }
 

@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,19 +30,24 @@ public class UserAPIController {
     private final PointsService pointsService;
     //사용자 가입
     @PostMapping("/user/add")
-    public ResponseEntity<Map<String,Object>> addUser(@Valid @ModelAttribute UserRequest request)
-            throws Exception{
-        Map<String,Object> resultMap = new HashMap<>();
-        HttpStatus status = HttpStatus.OK;
-        try{
+    public ResponseEntity<Map<String, Object>> addUser(@Valid @ModelAttribute UserRequest request) {
+        Map<String, Object> resultMap = new HashMap<>();
+        try {
             userService.addUser(request);
-            resultMap.put("status",200);
-            resultMap.put("result","OK");
+            resultMap.put("result", "OK");
+            // HTTP 200 OK 반환
+            return new ResponseEntity<>(resultMap, HttpStatus.OK);
 
-        }catch(Exception e){
-            throw new Exception(e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            resultMap.put("message", "이미 존재하는 이메일입니다.");
+            // HTTP 400 Bad Request 반환
+            return new ResponseEntity<>(resultMap, HttpStatus.BAD_REQUEST);
+
+        } catch (Exception e) {
+            resultMap.put("message", e.getMessage());
+            // HTTP 500 Internal Server Error 반환
+            return new ResponseEntity<>(resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(resultMap,status);
     }
     //(로그인 기준)자기 정보 가져오기
     @GetMapping("/user/info")

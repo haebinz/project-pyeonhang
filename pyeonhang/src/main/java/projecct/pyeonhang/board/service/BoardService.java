@@ -1,14 +1,5 @@
-package com.convenience.board.service;
+package projecct.pyeonhang.board.service;
 
-import com.convenience.board.dto.BoardDto;
-import com.convenience.board.entity.Board;
-import com.convenience.board.entity.BoardFile;
-import com.convenience.board.entity.BoardLike;
-import com.convenience.board.repository.BoardFileRepository;
-import com.convenience.board.repository.BoardLikeRepository;
-import com.convenience.board.repository.BoardRepository;
-import com.convenience.user.entity.User;
-import com.convenience.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
@@ -16,6 +7,15 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import projecct.pyeonhang.board.dto.BoardDto;
+import projecct.pyeonhang.board.entity.Board;
+import projecct.pyeonhang.board.entity.BoardFile;
+import projecct.pyeonhang.board.entity.BoardLike;
+import projecct.pyeonhang.board.repository.BoardFileRepository;
+import projecct.pyeonhang.board.repository.BoardLikeRepository;
+import projecct.pyeonhang.board.repository.BoardRepository;
+import projecct.pyeonhang.users.entity.UsersEntity;
+import projecct.pyeonhang.users.repository.UsersRepository;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +30,7 @@ import java.util.UUID;
 public class BoardService {
 
     private final BoardRepository boardRepository;
-    private final UserRepository userRepository;
+    private final UsersRepository userRepository;
     private final BoardFileRepository boardFileRepository;
     private final BoardLikeRepository boardLikeRepository;
 
@@ -39,7 +39,7 @@ public class BoardService {
      * application.yml 에 app.upload.board-dir 를 설정하지 않으면
      * 기본값 ./uploads/board 를 사용한다.
      */
-    @Value("${file.upload-dir}")
+    @Value("${server.file.upload.path}")
     private String uploadDir;
 
     /**
@@ -156,7 +156,7 @@ public class BoardService {
      */
     @Transactional
     public Integer create(String title, String contents, String userId, MultipartFile file) throws Exception {
-        User writer = userRepository.findById(userId)
+        UsersEntity writer = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         Board b = new Board();
@@ -164,7 +164,6 @@ public class BoardService {
         b.setContents(contents);
         b.setWriter(writer);
         b.setDelYn("N");
-        b.setCreateDate(LocalDateTime.now());
         if (b.getLikeCount() == null) {
             b.setLikeCount(0);
         }
@@ -212,7 +211,6 @@ public class BoardService {
 
         b.setTitle(title);
         b.setContents(contents);
-        b.setUpdateDate(LocalDateTime.now());
 
         Board saved = boardRepository.save(b);
 
@@ -246,7 +244,6 @@ public class BoardService {
         }
 
         b.setDelYn("Y");
-        b.setUpdateDate(LocalDateTime.now());
         boardRepository.save(b);
     }
 
@@ -265,7 +262,7 @@ public class BoardService {
             throw new RuntimeException("삭제된 게시글입니다.");
         }
 
-        User user = userRepository.findById(userId)
+        UsersEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         // 이미 추천했는지 확인

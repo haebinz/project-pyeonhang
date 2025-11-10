@@ -1,10 +1,11 @@
-package com.convenience.board.entity;
+package projecct.pyeonhang.board.entity;
 
-import com.convenience.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import projecct.pyeonhang.common.entity.BaseTimeEntity;
+import projecct.pyeonhang.users.entity.UsersEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Board {
+public class Board extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,26 +28,19 @@ public class Board {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer", referencedColumnName = "user_id")
-    private User writer;
+    private UsersEntity writer;
 
-    @Lob
-    @Column(name = "contents", nullable = false)
+    @Column(name = "contents", columnDefinition = "LONGTEXT", nullable = false)
     private String contents;
 
     @Column(name = "like_count")
     private Integer likeCount = 0;
 
-    @Column(name = "create_date")
-    private LocalDateTime createDate = LocalDateTime.now();
-
-    @Column(name = "update_date")
-    private LocalDateTime updateDate;
-
-    @Column(name = "del_yn")
+    @Column(name = "del_yn", columnDefinition = "CHAR(1)")
     private String delYn = "N";
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<BoardFile> files = new java.util.ArrayList<>();
+    private List<BoardFile> files = new ArrayList<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BoardComment> comments = new ArrayList<>();

@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import projecct.pyeonhang.board.entity.Board;
 import projecct.pyeonhang.common.entity.BaseTimeEntity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -14,6 +18,7 @@ import projecct.pyeonhang.common.entity.BaseTimeEntity;
 public class UsersEntity extends BaseTimeEntity {
 
     @Id
+    @Column(name = "user_id")
     private String userId;
     private String passwd;
     private String userName;
@@ -35,6 +40,10 @@ public class UsersEntity extends BaseTimeEntity {
     @JoinColumn(name="user_role")
     @ColumnDefault("USER")
     private UserRoleEntity role;
+
+    @OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Board> boards = new ArrayList<>();
+
 
     @PrePersist
     void applyDefaults() {

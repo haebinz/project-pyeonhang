@@ -11,7 +11,7 @@ server:
   port: 9090 #나중에 AWS포트로변경
   file:
     upload:
-      path: C:\\files\\upload\\banner\\
+      path: C:\\files\\upload\\board\\
     editor:
       path: C:\\files\\upload\\editor\\
     coupon:

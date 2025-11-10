@@ -1,10 +1,10 @@
-package com.convenience.board.repository;
+package projecct.pyeonhang.board.repository;
 
-import com.convenience.board.entity.Board;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import projecct.pyeonhang.board.entity.Board;
 
 import java.util.List;
 

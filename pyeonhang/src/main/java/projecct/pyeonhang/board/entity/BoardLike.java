@@ -1,10 +1,10 @@
-// com.convenience.board.entity.BoardLike.java
-package com.convenience.board.entity;
+// projecct.pyeonhang.board.entity.BoardLike.java
+package projecct.pyeonhang.board.entity;
 
-import com.convenience.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import projecct.pyeonhang.users.entity.UsersEntity;
 
 import java.time.LocalDateTime;
 
@@ -30,7 +30,7 @@ public class BoardLike {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UsersEntity user;
 
     @Column(name = "create_date")
     private LocalDateTime createDate = LocalDateTime.now();

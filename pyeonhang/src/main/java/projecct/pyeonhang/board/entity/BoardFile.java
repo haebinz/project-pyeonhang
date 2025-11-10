@@ -1,4 +1,4 @@
-package com.convenience.board.entity;
+package projecct.pyeonhang.board.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

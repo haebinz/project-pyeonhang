@@ -1,9 +1,9 @@
-// com.convenience.board.repository.BoardFileRepository.java
-package com.convenience.board.repository;
+// projecct.pyeonhang.board.repository.BoardFileRepository.java
+package projecct.pyeonhang.board.repository;
 
-import com.convenience.board.entity.Board;
-import com.convenience.board.entity.BoardFile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import projecct.pyeonhang.board.entity.Board;
+import projecct.pyeonhang.board.entity.BoardFile;
 
 import java.util.List;
 

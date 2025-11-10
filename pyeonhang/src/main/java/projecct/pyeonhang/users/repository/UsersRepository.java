@@ -11,6 +11,9 @@ import java.util.Optional;
 
 public interface UsersRepository extends JpaRepository<UsersEntity,String> {
 
+    // 아이디 중복 확인
+    boolean existsByUserId(String userId);
+    
     @Query("select u.userId " +
             "from UsersEntity u " +
             "where" +

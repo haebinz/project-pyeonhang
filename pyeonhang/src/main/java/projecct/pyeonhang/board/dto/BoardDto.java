@@ -1,9 +1,9 @@
-package com.convenience.board.dto;
+package projecct.pyeonhang.board.dto;
 
-import com.convenience.board.entity.Board;
-import com.convenience.board.entity.BoardFile;
 import lombok.Builder;
 import lombok.Data;
+import projecct.pyeonhang.board.entity.Board;
+import projecct.pyeonhang.board.entity.BoardFile;
 
 import java.time.LocalDateTime;
 import java.util.List;

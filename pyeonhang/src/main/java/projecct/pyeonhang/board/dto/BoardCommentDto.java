@@ -1,9 +1,9 @@
-// com.convenience.board.dto.BoardCommentDto.java
-package com.convenience.board.dto;
+// projecct.pyeonhang.board.dto.BoardCommentDto.java
+package projecct.pyeonhang.board.dto;
 
-import com.convenience.board.entity.BoardComment;
 import lombok.Builder;
 import lombok.Data;
+import projecct.pyeonhang.board.entity.BoardComment;
 
 import java.time.LocalDateTime;
 

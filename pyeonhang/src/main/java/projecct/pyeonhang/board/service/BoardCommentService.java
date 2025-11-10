@@ -1,17 +1,18 @@
-// com.convenience.board.service.BoardCommentService.java
-package com.convenience.board.service;
+// projecct.pyeonhang.board.service.BoardCommentService.java
+package projecct.pyeonhang.board.service;
 
-import com.convenience.board.dto.BoardCommentDto;
-import com.convenience.board.entity.Board;
-import com.convenience.board.entity.BoardComment;
-import com.convenience.board.repository.BoardCommentRepository;
-import com.convenience.board.repository.BoardRepository;
-import com.convenience.user.entity.User;
-import com.convenience.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import projecct.pyeonhang.board.dto.BoardCommentDto;
+import projecct.pyeonhang.board.entity.Board;
+import projecct.pyeonhang.board.entity.BoardComment;
+import projecct.pyeonhang.board.repository.BoardCommentRepository;
+import projecct.pyeonhang.board.repository.BoardRepository;
+import projecct.pyeonhang.users.entity.UsersEntity;
+import projecct.pyeonhang.users.repository.UsersRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
 public class BoardCommentService {
 
     private final BoardRepository boardRepository;
-    private final UserRepository userRepository;
+    private final UsersRepository userRepository;
     private final BoardCommentRepository boardCommentRepository;
 
     @Transactional(readOnly = true)
@@ -41,7 +42,7 @@ public class BoardCommentService {
     public BoardCommentDto create(Integer boardId, String userId, String content) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않습니다."));
-        User user = userRepository.findById(userId)
+        UsersEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         BoardComment c = new BoardComment();
@@ -49,7 +50,6 @@ public class BoardCommentService {
         c.setUser(user);
         c.setContent(content);
         c.setDelYn("N");
-        c.setCreateDate(LocalDateTime.now());
 
         BoardComment saved = boardCommentRepository.save(c);
         return BoardCommentDto.from(saved, userId);
@@ -66,7 +66,6 @@ public class BoardCommentService {
         }
 
         c.setContent(content);
-        c.setUpdateDate(LocalDateTime.now());
 
         return BoardCommentDto.from(c, userId);
     }
@@ -82,6 +81,5 @@ public class BoardCommentService {
         }
 
         c.setDelYn("Y");
-        c.setUpdateDate(LocalDateTime.now());
     }
 }

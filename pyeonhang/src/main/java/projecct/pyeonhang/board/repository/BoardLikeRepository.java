@@ -1,18 +1,18 @@
-// com.convenience.board.repository.BoardLikeRepository.java
-package com.convenience.board.repository;
+// projecct.pyeonhang.board.repository.BoardLikeRepository.java
+package projecct.pyeonhang.board.repository;
 
-import com.convenience.board.entity.Board;
-import com.convenience.board.entity.BoardLike;
-import com.convenience.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import projecct.pyeonhang.board.entity.Board;
+import projecct.pyeonhang.board.entity.BoardLike;
+import projecct.pyeonhang.users.entity.UsersEntity;
 
 import java.util.Optional;
 
 public interface BoardLikeRepository extends JpaRepository<BoardLike, Integer> {
 
-    boolean existsByBoardAndUser(Board board, User user);
+    boolean existsByBoardAndUser(Board board, UsersEntity user);
 
-    Optional<BoardLike> findByBoardAndUser(Board board, User user);
+    Optional<BoardLike> findByBoardAndUser(Board board, UsersEntity user);
 
     long countByBoard(Board board); // 필요하면 재계산용
 }

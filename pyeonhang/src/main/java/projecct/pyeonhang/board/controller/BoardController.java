@@ -1,18 +1,18 @@
-package com.convenience.board.controller;
-import com.convenience.board.dto.BoardCommentDto;
-import com.convenience.board.dto.BoardDto;
-import com.convenience.board.service.BoardCommentService;
-import com.convenience.board.service.BoardService;
-import com.convenience.common.dto.ApiResponse;
+package projecct.pyeonhang.board.controller;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import projecct.pyeonhang.board.dto.BoardCommentDto;
+import projecct.pyeonhang.board.dto.BoardDto;
+import projecct.pyeonhang.board.service.BoardCommentService;
+import projecct.pyeonhang.board.service.BoardService;
+import projecct.pyeonhang.common.dto.ApiResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class BoardController {
     // Authorization: Bearer token, Content-Type: application/json
     // { "title": "테스트 글", "contents": "내용입니다" }
     @PostMapping(path = "/with-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<Integer> createWithFile(
+    public ApiResponse<Object> createWithFile(
             @RequestParam("title") String title,
             @RequestParam("contents") String contents,
             @RequestPart(value = "file", required = false) MultipartFile file,
@@ -77,7 +77,7 @@ public class BoardController {
     // { "title": "수정된 제목", "contents": "수정된 내용" }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<Void> update(
+    public ApiResponse<String> update(
             @PathVariable Integer id,
             @RequestParam("title") String title,
             @RequestParam("contents") String contents,
@@ -94,7 +94,7 @@ public class BoardController {
     // 게시글 삭제 api/board/{{게시글 ID}}
     // Authorization: Bearer token
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Integer id, @AuthenticationPrincipal UserDetails user) {
+    public ApiResponse<Object> delete(@PathVariable Integer id, @AuthenticationPrincipal UserDetails user) {
         if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
         boolean isAdmin = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         boardService.delete(id, user.getUsername(), isAdmin);
@@ -103,12 +103,12 @@ public class BoardController {
 
     // 게시글 추천
     @PostMapping("/{id}/like")
-    public ApiResponse<Integer> like(
+    public ApiResponse<Object> like(
             @PathVariable("id") Integer id,
             @AuthenticationPrincipal UserDetails user
     ) {
         if (user == null) {
-            return ApiResponse.fail("로그인이 필요합니다.");
+            return ApiResponse.fail(500,"로그인이 필요합니다.");
         }
 
         int likeCount = boardService.like(id, user.getUsername());
@@ -128,7 +128,7 @@ public class BoardController {
 
     // 댓글 작성
     @PostMapping("/{id}/comments")
-    public ApiResponse<BoardCommentDto> createComment(
+    public ApiResponse<Object> createComment(
             @PathVariable("id") Integer boardId,
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal UserDetails user
@@ -146,7 +146,7 @@ public class BoardController {
 
     // 댓글 수정
     @PutMapping("/{boardId}/comments/{commentId}")
-    public ApiResponse<BoardCommentDto> updateComment(
+    public ApiResponse<Object> updateComment(
             @PathVariable Integer boardId,
             @PathVariable Integer commentId,
             @RequestBody Map<String, String> body,
@@ -167,7 +167,7 @@ public class BoardController {
 
     // 댓글 삭제
     @DeleteMapping("/{boardId}/comments/{commentId}")
-    public ApiResponse<Void> deleteComment(
+    public ApiResponse<Object> deleteComment(
             @PathVariable Integer boardId,
             @PathVariable Integer commentId,
             @AuthenticationPrincipal UserDetails user

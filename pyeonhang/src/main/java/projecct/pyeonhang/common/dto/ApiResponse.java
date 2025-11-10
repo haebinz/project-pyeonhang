@@ -19,4 +19,10 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> ok(T response) {
         return new ApiResponse<>(200, response);
     }
+    public static <T> ApiResponse<T> fail(T response) {
+        return new ApiResponse<>(500, response);
+    }
+    public static <T> ApiResponse<T> fail(int status, T response) {
+        return new ApiResponse<>(status, response);
+    }
 }
