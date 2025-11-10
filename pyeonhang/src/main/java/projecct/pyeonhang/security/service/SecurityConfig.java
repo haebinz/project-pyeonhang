@@ -26,6 +26,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import projecct.pyeonhang.attendance.service.AttendanceService;
 import projecct.pyeonhang.common.filter.CustomLogoutFilter;
 import projecct.pyeonhang.common.filter.JWTFilter;
 import projecct.pyeonhang.common.filter.LoginFilter;
@@ -44,6 +45,7 @@ public class SecurityConfig {
 
     private final UserServiceDetails serviceDetails;
     private final JWTUtils jwtUtils;
+    private final AttendanceService attendanceService;
 
 
     @Bean
@@ -78,7 +80,7 @@ public class SecurityConfig {
         // loginFilter에서 인증처리 하기 위한 매니저 생성
         AuthenticationManager manager = this.authenticationManager(configuration);
 
-        LoginFilter loginFilter = new LoginFilter(manager, jwtUtils);
+        LoginFilter loginFilter = new LoginFilter(manager, jwtUtils,attendanceService);
         loginFilter.setFilterProcessesUrl("/api/v1/user/login");
 
         http.csrf(AbstractHttpConfigurer::disable)

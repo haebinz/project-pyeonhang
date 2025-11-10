@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import projecct.pyeonhang.attendance.service.AttendanceService;
 import projecct.pyeonhang.common.utils.JWTUtils;
 import projecct.pyeonhang.users.dto.UserSecureDTO;
 
@@ -24,9 +25,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JWTUtils jwtUtils;
+    private final AttendanceService attendanceService;
 
     public static final long ACCESS_TOKEN_EXPIRE_TIME = 86400L;   // 24시간
-    public static final long REFRESH_TOKEN_EXPIRE_TIME = 86400L; //24시간
+    public static final long REFRESH_TOKEN_EXPIRE_TIME = 86400L;
+
+    //24시간
 
     //인증시도
     @Override
@@ -67,6 +71,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setHeader("Authorization", accessToken);
         response.addCookie(createCookie("refresh", refreshToken));
         response.setStatus(HttpServletResponse.SC_OK);
+
+        try {
+
+            attendanceService.checkAttendance(userId);
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
 
         try{
 

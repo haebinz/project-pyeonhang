@@ -15,6 +15,9 @@ public interface WishListRepository extends JpaRepository<WishListEntity, WishLi
 
     void deleteByUser_UserIdAndProduct_CrawlId(String userId, Integer crawlId);
 
+    @Query("select w from WishListEntity w join fetch w.product p join fetch w.user u where u.userId = :userId")
+    List<WishListEntity> findAllWithProductByUserId(@Param("userId") String userId);
+
     List<WishListEntity> findByUser_UserId(String userId);
 
 

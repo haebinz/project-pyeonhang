@@ -16,7 +16,7 @@ public class PointsService {
 
     private final PointsRepository pointsRepository;
 
-
+    //마이페이지->포인트 리스트
     @Transactional(readOnly = true)
     public Map<String, Object> listMyPoints(String userId) {
         List<PointsDTO> items = pointsRepository.findAllByUserIdWithUser(userId)
