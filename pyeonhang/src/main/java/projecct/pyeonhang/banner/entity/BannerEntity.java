@@ -12,17 +12,17 @@ import projecct.pyeonhang.common.entity.BaseTimeEntity;
 public class BannerEntity extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int bannerId;
+    private String bannerId;
 
     private String title;
 
     private String linkUrl;
 
+    private String imgUrl;
+
+    private Integer bannerOrder;
+
     @Column( columnDefinition = "CHAR(1)")
     private String useYn;
-
-    @OneToOne(mappedBy = "banner", cascade = CascadeType.ALL)
-    private BannerFileEntity bannerFile;
 
 }
