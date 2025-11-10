@@ -112,10 +112,10 @@ public class UserAPIController {
     //(비로그인)아이디 찾기
     @GetMapping("/user/findId")
     public ResponseEntity<Map<String, Object>> findUserId(@Valid @ModelAttribute UserFindRequest request) throws Exception {
+        Map<String, Object> resultMap = new HashMap<>();
         try {
-            return ResponseEntity.ok(
-                    userService.findUserId(request.getUserName(), request.getEmail())
-            );
+            resultMap = userService.findUserId(request.getUserName(), request.getEmail());
+            return ResponseEntity.ok(resultMap);
         } catch (Exception e) {
             throw new Exception(e.getMessage());
         }
