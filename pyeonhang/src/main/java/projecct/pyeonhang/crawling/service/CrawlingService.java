@@ -305,7 +305,9 @@ public class CrawlingService {
         resultMap.put("promoType", entity.getPromoType());
         resultMap.put("productType", entity.getProductType());
         resultMap.put("likeCount", entity.getLikeCount());
-
+        resultMap.put("crawlId",entity.getCrawlId());
+        resultMap.put("crawledAt",entity.getCrawledAt());
+        //날짜/아이디
         return resultMap;
     }
 

@@ -1,9 +1,13 @@
 package projecct.pyeonhang.crawling.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -41,6 +45,10 @@ public class CrawlingEntity {
     //좋아요 수(찜하기 누르면 좋아요 수 올라감)
     private int likeCount;
 
+    @CreatedDate
+    @Column(updatable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime crawledAt;
 
 
 }

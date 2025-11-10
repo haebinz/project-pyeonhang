@@ -4,6 +4,7 @@ package projecct.pyeonhang.crawling.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -18,6 +19,7 @@ import projecct.pyeonhang.crawling.service.CrawlingService;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +30,7 @@ public class CrawlingAPIController {
     private final CrawlingService crawlingService;
     private final CrawlingRepository crawlingRepository;
 
-
+    //제품 정보 가져오기
     @GetMapping({
             "/crawl",
             "/crawl/{sourceChain}",
@@ -40,9 +42,23 @@ public class CrawlingAPIController {
             @PathVariable(required = false) String promoType,
             @PathVariable(required = false) String productType,
             @RequestParam(name = "q", required = false) String q,
-            @PageableDefault(size = 20, page = 0, sort = "price", direction = Sort.Direction.ASC)
-            Pageable pageable
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sortField", defaultValue = "price") String sortField,
+            @RequestParam(name = "dir", defaultValue = "asc") String dir
     ) {
+
+        Set<String> allowed = Set.of("price", "likeCount"); // 필요하면 필드 추가
+
+        if (!allowed.contains(sortField)) {
+            sortField = "price";
+        }
+
+        Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        // Pageable 생성 (기본-price asc)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+
         Map<String,Object> result = crawlingService.getByUnifiedFilters(
                 sourceChain, promoType, productType, q, pageable
         );
