@@ -16,7 +16,12 @@ import projecct.pyeonhang.coupon.entity.CouponEntity;
 import projecct.pyeonhang.coupon.entity.CouponFileEntity;
 import projecct.pyeonhang.coupon.repository.CouponFileRepository;
 import projecct.pyeonhang.coupon.repository.CouponRepository;
+import projecct.pyeonhang.point.entity.PointsEntity;
+import projecct.pyeonhang.point.repository.PointsRepository;
+import projecct.pyeonhang.users.dto.UserCouponDTO;
+import projecct.pyeonhang.users.entity.UserCouponEntity;
 import projecct.pyeonhang.users.entity.UsersEntity;
+import projecct.pyeonhang.users.repository.UserCouponRepository;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
 
@@ -30,6 +35,8 @@ public class CouponService {
     private final CouponRepository couponRepository;
     private final CouponFileRepository couponFileRepository;
     private final UsersRepository usersRepository;
+    private final PointsRepository pointsRepository;
+    private final UserCouponRepository userCouponRepository;
 
     //파일 업로드 지정
     @Value("${server.file.coupon.path}")
@@ -185,24 +192,81 @@ public class CouponService {
 
     //쿠폰교환(사용자)
     @Transactional
-    public Map<String,Object> exchangeCoupon(String userId,int couponId) throws Exception {
-        Map<String,Object> resultMap = new HashMap<>();
-        UsersEntity users = new UsersEntity();
-        CouponEntity coupon = new CouponEntity();
-        try {
-            users=usersRepository.findById(userId).orElseThrow(()->new IllegalArgumentException("사용자가 없습니다"));
-            resultMap.put("users", users);
-            resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
-            coupon=couponRepository.findById(couponId).orElseThrow(()->new IllegalArgumentException("쿠폰이 없습니다"));
-            resultMap.put("coupon", coupon);
-            resultMap.put("description", coupon.getDescription());
-            resultMap.put("requiredPoint", coupon.getRequiredPoint());
+    public Map<String,Object> exchangeCoupon(String userId, int couponId) throws Exception {
+        Map<String,Object> result = new HashMap<>();
 
-        }catch (Exception e){
+        //쿠폰 확인
+        CouponEntity coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰이 없습니다 (id=" + couponId + ")"));
 
+        int required = coupon.getRequiredPoint();
+        
+
+        // 포인트 차감
+        int updated = usersRepository.decrementPointBalanceIfEnough(userId, required);
+        if (updated == 0) {
+            boolean userExists = usersRepository.existsById(userId);
+            if (!userExists) throw new IllegalArgumentException("사용자가 없습니다 (id=" + userId + ")");
+            throw new IllegalArgumentException("포인트가 부족합니다.");
         }
-        return resultMap;
+
+        //포인트 차감
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다"));
+
+        //포인트 기록
+        PointsEntity pointsEntity = PointsEntity.builder()
+                .user(user)
+                .sourceType(PointsEntity.SourceType.COUPON_EXCHANGE)
+                .amount(-required)
+                .reason("쿠폰교환: " + coupon.getCouponName())
+                .build();
+        pointsRepository.save(pointsEntity);
+
+        //user_coupon 저장
+        UserCouponEntity userCouponEntity = new UserCouponEntity();
+        userCouponEntity.setUser(user);
+        userCouponEntity.setCoupon(coupon);
+        userCouponRepository.save(userCouponEntity);
+
+        result.put("resultCode", 200);
+        result.put("resultMessage", "COUPON_EXCHANGED");
+        result.put("userId", userId);
+        result.put("couponId", couponId);
+        result.put("couponName", coupon.getCouponName());
+        result.put("requiredPoint", required);
+        result.put("balanceAfter", user.getPointBalance());
+        result.put("acquiredAt", userCouponEntity.getAcquiredAt());
+
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> listMyCoupons(String userId) {
+        Map<String, Object> result = new HashMap<>();
+
+        List<UserCouponEntity> list = userCouponRepository.findAllByUserIdWithCouponAndFile(userId);
+
+        List<UserCouponDTO> items = list.stream().map(uc -> {
+            var c = uc.getCoupon();
+            var f = c.getFile();
+            return UserCouponDTO.builder()
+                    .userCouponId(uc.getUserCouponId())
+                    .couponId(c.getCouponId())
+                    .couponName(c.getCouponName())
+                    .description(c.getDescription())
+                    .requiredPoint(c.getRequiredPoint())
+                    .fileName(f != null ? f.getFileName() : null)
+                    .storedName(f != null ? f.getStoredName() : null)
+                    .filePath(f != null ? f.getFilePath() : null)
+                    .acquiredAt(uc.getAcquiredAt())
+                    .build();
+        }).toList();
+
+        result.put("resultCode", 200);
+        result.put("count", items.size());
+        result.put("items", items);
+        return result;
     }
 
 }

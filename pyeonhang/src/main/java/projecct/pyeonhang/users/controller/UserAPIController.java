@@ -5,11 +5,16 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import projecct.pyeonhang.attendance.service.AttendanceService;
 import projecct.pyeonhang.common.dto.ApiResponse;
+import projecct.pyeonhang.coupon.service.CouponService;
 import projecct.pyeonhang.point.service.PointsService;
 import projecct.pyeonhang.users.dto.*;
 import projecct.pyeonhang.users.service.UserService;
@@ -27,6 +32,9 @@ public class UserAPIController {
     private final UserService userService;
     private final WishListService wishListService;
     private final PointsService pointsService;
+    private final CouponService couponService;
+    private final AttendanceService attendanceService;
+
     //사용자 가입
     @PostMapping("/user/add")
     public ResponseEntity<Map<String,Object>> addUser(@Valid @ModelAttribute UserRequest request)
@@ -220,6 +228,72 @@ public class UserAPIController {
         return ResponseEntity.ok(resultMap);
     }
 
+
+    //쿠폰교환하기위해서 쿠폰목록 가져오기
+    @GetMapping("/user/coupon")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getCouponList(
+            @PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        Map<String, Object> resultMap = couponService.getCouponList(pageable);
+        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+    }
+    
+    //쿠폰 교환
+    @PostMapping("/user/coupon/{couponId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> exchangeCoupon(
+            @PathVariable int couponId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) throws Exception {
+        Map<String,Object> resultMap = new HashMap<>();
+        if (principalUserId == null) {
+            resultMap.put("resultCode", 401);
+            resultMap.put("resultMessage", "UNAUTHORIZED");
+
+        }
+        Map<String,Object> res = couponService.exchangeCoupon(principalUserId, couponId);
+        return ResponseEntity.ok(ApiResponse.ok(res));
+    }
+
+    //보유 쿠폰 목록 가져오기
+    @GetMapping("/user/coupon/my")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> myCoupons(
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.ok(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED")));
+        }
+        Map<String, Object> result = couponService.listMyCoupons(principalUserId);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    //수동으로 출석체크하기(옵션)
+    @PostMapping("/user/attendance/check")
+    public ResponseEntity<Map<String, Object>> checkAttendance(
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED"));
+        }
+        Map<String, Object> resultMap = attendanceService.checkAttendance(principalUserId);
+        return ResponseEntity.ok(resultMap);
+    }
+    
+    //출석체크한날 리스트
+    @GetMapping("/user/attendance")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMyAttendance(
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.ok(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED")));
+        }
+
+        Map<String, Object> res = attendanceService.listAttendanceDates(principalUserId);
+        return ResponseEntity.ok(ApiResponse.ok(res));
+    }
 
 
 

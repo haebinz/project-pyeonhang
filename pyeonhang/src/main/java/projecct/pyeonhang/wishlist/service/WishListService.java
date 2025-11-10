@@ -12,9 +12,13 @@ import projecct.pyeonhang.wishlist.entity.WishListEntity;
 import projecct.pyeonhang.wishlist.entity.WishListId;
 import projecct.pyeonhang.wishlist.repository.WishListRepository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,19 +73,35 @@ public class WishListService {
     public Map<String, Object> listMyWish(String userId) {
         List<WishListEntity> list = wishListRepository.findByUser_UserId(userId);
 
-        var items = list.stream().map(w -> {
-            CrawlingEntity c = w.getProduct();
-            Map<String, Object> m = new HashMap<>();
-            m.put("crawlId", c.getCrawlId());
-            m.put("productName", c.getProductName());
-            m.put("price", c.getPrice());
-            m.put("imageUrl", c.getImageUrl());
-            m.put("promoType", c.getPromoType());
-            m.put("productType", c.getProductType());
-            m.put("sourceChain", c.getSourceChain());
-            m.put("likeCount", c.getLikeCount());
-            return m;
-        }).toList();
+        // Asia/Seoul 기준 현재 연도/월
+        java.time.ZoneId seoul = java.time.ZoneId.of("Asia/Seoul");
+        java.time.LocalDate nowSeoul = java.time.LocalDate.now(seoul);
+        int currentYear = nowSeoul.getYear();
+        int currentMonth = nowSeoul.getMonthValue();
+
+        List<Map<String,Object>> items = list.stream()
+                .filter(w -> {
+                    CrawlingEntity crawlEntity = w.getProduct();
+                    java.time.LocalDateTime crawledAt = crawlEntity.getCrawledAt();
+                    if (crawledAt == null) return false; // 크롤링 날짜 없으면 제외
+                    // 비교: 연도와 월이 같아야 이번 달로 간주
+                    return crawledAt.getYear() == currentYear && crawledAt.getMonthValue() == currentMonth;
+                })
+                .map(w -> {
+                    CrawlingEntity entity = w.getProduct();
+                    Map<String, Object> resultMap = new HashMap<>();
+                    resultMap.put("crawlId", entity.getCrawlId());
+                    resultMap.put("productName", entity.getProductName());
+                    resultMap.put("price", entity.getPrice());
+                    resultMap.put("imageUrl", entity.getImageUrl());
+                    resultMap.put("promoType", entity.getPromoType());
+                    resultMap.put("productType", entity.getProductType());
+                    resultMap.put("sourceChain", entity.getSourceChain());
+                    resultMap.put("likeCount", entity.getLikeCount());
+                    resultMap.put("crawledAt", entity.getCrawledAt());
+                    return resultMap;
+                })
+                .toList();
 
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("resultCode", 200);

@@ -1,8 +1,10 @@
 package projecct.pyeonhang.users.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.admin.dto.AdminUserProjection;
 import projecct.pyeonhang.users.entity.UsersEntity;
 
@@ -39,6 +41,12 @@ public interface UsersRepository extends JpaRepository<UsersEntity,String> {
     where u.user_id = :userId
     """, nativeQuery = true)
     Optional<AdminUserProjection> getUserById(@Param("userId") String userId);
+
+
+    @Modifying
+    @Transactional
+    @Query("update UsersEntity u set u.pointBalance = u.pointBalance - :amount where u.userId = :userId and u.pointBalance >= :amount")
+    int decrementPointBalanceIfEnough(@Param("userId") String userId, @Param("amount") int amount);
 
 
 }
