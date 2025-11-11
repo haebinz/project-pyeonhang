@@ -90,7 +90,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth ->
                                 auth.requestMatchers("/**").permitAll()
-                                        .requestMatchers("/user/login").permitAll() // 인증처리 안함 패스
+                                        .requestMatchers("/user/login").permitAll()
+                                        .requestMatchers("/user/login/**").permitAll()// 인증처리 안함 패스
                                         .requestMatchers("/api/v1/user/login").permitAll() // 인증처리 안함 패스
                                         .requestMatchers("/user/login/error").permitAll()
                                         .requestMatchers("/user/logout/**").permitAll()

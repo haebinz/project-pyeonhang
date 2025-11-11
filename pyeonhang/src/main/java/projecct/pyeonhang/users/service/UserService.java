@@ -96,7 +96,7 @@ public class UserService {
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("resultCode", 200);
         resultMap.put("resultMessage", "OK");
-        resultMap.put("회원님의 Id는 ", userId);
+        resultMap.put("data", userId);
         return resultMap;
     }
 
