@@ -203,8 +203,29 @@ public class UserAPIController {
             log.info("비밀번호 변경 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("비밀번호 변경 실패"));
         }
-
     }
+
+    @DeleteMapping("/user/delete")
+    public ResponseEntity<ApiResponse<Object>> deleteUser(
+            @AuthenticationPrincipal(expression = "username")
+            String principalUserId
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
+        }
+        try {
+            userService.withdraw(principalUserId);
+            return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴가 완료되었습니다."));
+        }catch (Exception e) {
+            log.info("회원 탈퇴 실패: {}", e.getMessage(), e);
+            return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴 실패"));
+        }
+    }
+
+
+
+
     //(로그인 기준)찜목록추가
     @PostMapping("/user/wish")
     public ResponseEntity<ApiResponse<Object>> addMyWish(
@@ -214,7 +235,7 @@ public class UserAPIController {
     ) {
         if (principalUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.ok(new HashMap<>()));
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
         }
 
         try{

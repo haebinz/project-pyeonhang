@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.users.dto.*;
+import projecct.pyeonhang.users.entity.QUsersEntity;
 import projecct.pyeonhang.users.entity.UserRoleEntity;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UserRoleRepository;
@@ -130,6 +131,14 @@ public class UserService {
         usersRepository.save(user);
     }
 
+    @Transactional
+    public void withdraw(String userId) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        user.setUseYn("Y");
+        usersRepository.save(user);
+    }
 
 
 
