@@ -25,6 +25,7 @@ public class CrawlingService {
 
 
     private final CrawlingRepository crawlingRepository;
+    private final CrawlingCommentService crawlingCommentService;
 
     public Map<String, Object> getByUnifiedFilters(
             String sourceChain,
@@ -77,116 +78,6 @@ public class CrawlingService {
         return CrawlingEntity.ProductType.valueOf(v);
     }
 
-    /*// 전체 가져오기
-    public Map<String,Object> getCrawlingAll() {
-        Map<String,Object> resultMap = new HashMap<>();
-        resultMap.put("totalCount", crawlingRepository.count());
-        resultMap.put("latest10", crawlingRepository.findTop10ByOrderByCrawlIdDesc()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList())
-        );
-        return resultMap;
-    }*/
-
-    //전체 가져오기(전체 상품)
-    /*public Map<String,Object> getAll( Pageable pageable){
-        Map<String,Object> resultMap = new HashMap<>();
-        Page<CrawlingEntity> pageResult = crawlingRepository.findAll(pageable);
-        List<CrawlingDTO> items = pageResult.getContent()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
-        resultMap.put("items",items);
-        resultMap.put("totalPages",pageResult.getTotalPages());
-        resultMap.put("currentPage",pageable.getPageNumber());
-        resultMap.put("pageSize",pageable.getPageSize());
-        return resultMap;
-    }
-
-
-
-    // 체인별 상세 (체인별 제품 count + 전체)
-    public Map<String,Object> getCrawlingBySourceChain(String sourceChain, Pageable pageable) {
-        Map<String,Object> resultMap = new HashMap<>();
-
-        Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChain(sourceChain, pageable);
-
-        // DTO 변환
-        List<CrawlingDTO> items = pageResult.getContent()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
-
-        resultMap.put("sourceChain", sourceChain);
-        resultMap.put("totalElements", pageResult.getTotalElements());
-        resultMap.put("totalPages", pageResult.getTotalPages());
-        resultMap.put("items", items);
-
-        return resultMap;
-    }
-
-    //체인별 전체->카테고리 선택
-    public Map<String,Object> getCategoryOfTotal(String sourceChain,CrawlingEntity.ProductType productType,Pageable pageable) {
-        Map<String,Object> resultMap = new HashMap<>();
-        Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChainAndProductType(sourceChain,productType,pageable);
-        // DTO 변환
-        List<CrawlingDTO> items = pageResult.getContent()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
-
-        resultMap.put("sourceChain", sourceChain);
-        resultMap.put("totalElements", pageResult.getTotalElements());
-        resultMap.put("totalPages", pageResult.getTotalPages());
-        resultMap.put("items", items);
-
-        return resultMap;
-
-    }
-
-    //체인->행사유형별 구분
-    public Map<String, Object> getByChainAndPromo(
-            String sourceChain,
-            @Nullable CrawlingEntity.PromoType promo,  // null이면 전체
-            Pageable pageable
-    ) {
-        Map<String,Object> resultMap = new HashMap<>();
-        Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChainAndPromoType(sourceChain,promo, pageable);
-
-        List<CrawlingDTO> items = pageResult.getContent()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
-
-        resultMap.put("sourceChain", sourceChain);
-        resultMap.put("totalElements", pageResult.getTotalElements());
-        resultMap.put("totalPages", pageResult.getTotalPages());
-        resultMap.put("items", items);
-
-        return resultMap;
-    }
-
-
-/*
-*  public Map<String,Object> getCrawlingByPromoType(String sourceChain,CrawlingEntity.PromoType promoType,Pageable pageable) {
-        Map<String,Object> resultMap = new HashMap<>();
-
-        Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChainAndPromoType(sourceChain ,promoType, pageable);
-        // DTO 변환
-        List<CrawlingDTO> items = pageResult.getContent()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
-
-        resultMap.put("sourceChain", sourceChain);
-        resultMap.put("totalElements", pageResult.getTotalElements());
-        resultMap.put("totalPages", pageResult.getTotalPages());
-        resultMap.put("items", items);
-
-        return resultMap;
-    }*/
-
     //행사 유형별 가져오기
     public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
         Map<String,Object> resultMap = new HashMap<>();
@@ -204,28 +95,6 @@ public class CrawlingService {
 
         return resultMap;
     }
-    /*
-    //카테고리별 가져오기
-    public Map<String,Object> getCrawlingBySourceAndProductType(String sourceChain,
-                                                                CrawlingEntity.PromoType promoType,
-                                                                CrawlingEntity.ProductType productType,
-                                                                Pageable pageable) {
-        Map<String,Object> resultMap = new HashMap<>();
-
-        Page<CrawlingEntity> pageResult = crawlingRepository.findBySourceChainAndPromoTypeAndProductType(sourceChain ,promoType,productType, pageable);
-        // DTO 변환
-        List<CrawlingDTO> items = pageResult.getContent()
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
-
-        resultMap.put("sourceChain", sourceChain);
-        resultMap.put("totalElements", pageResult.getTotalElements());
-        resultMap.put("totalPages", pageResult.getTotalPages());
-        resultMap.put("items", items);
-
-        return resultMap;
-    }*/
 
 
 
@@ -278,50 +147,35 @@ public class CrawlingService {
 
         return resultMap;
     }
-    /*
-    //제품 검색
-    public Map<String, Object> searchProducts(String sourceChain, String keyword, Pageable pageable) {
-        String src = (sourceChain == null || sourceChain.isBlank()) ? null : sourceChain.trim();
-        String productName   = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
-        Page<CrawlingEntity> page = crawlingRepository.searchProduct(src, productName, pageable);
+    //제품 상세+댓글
+    @Transactional(readOnly = true)
+    public Map<String, Object> getProductDetail(int crawlId){
+        Map<String, Object> resultMap = new HashMap<>();
+        CrawlingEntity entity = crawlingRepository.findById(crawlId)
+                .orElseThrow(() -> new IllegalArgumentException("crawlId not found: " + crawlId));
 
-        Map<String,Object> result = new HashMap<>();
-        result.put("sourceChain", src);
-        result.put("query", productName);
-        result.put("totalElements", page.getTotalElements());
-        result.put("totalPages", page.getTotalPages());
-        result.put("items", page.getContent().stream().map(CrawlingDTO::of).toList());
-        return result;
-    }*/
+        // product info
+        Map<String, Object> product = new HashMap<>();
+        product.put("sourceChain", entity.getSourceChain());
+        product.put("productName", entity.getProductName());
+        product.put("price", entity.getPrice());
+        product.put("imageUrl", entity.getImageUrl());
+        product.put("promoType", entity.getPromoType());
+        product.put("productType", entity.getProductType());
+        product.put("likeCount", entity.getLikeCount());
+        product.put("crawlId", entity.getCrawlId());
+        product.put("crawledAt", entity.getCrawledAt());
 
-    public Map<String,Object> getProductDetail(int crawlId){
-        Map<String,Object> resultMap = new HashMap<>();
-        CrawlingEntity entity = crawlingRepository.findById(crawlId).orElseThrow(()-> new IllegalArgumentException("crawlId not found: " + crawlId));
-        resultMap.put("sourceChain", entity.getSourceChain());
-        resultMap.put("productName", entity.getProductName());
-        resultMap.put("price", entity.getPrice());
-        resultMap.put("imageUrl", entity.getImageUrl());
-        resultMap.put("promoType", entity.getPromoType());
-        resultMap.put("productType", entity.getProductType());
-        resultMap.put("likeCount", entity.getLikeCount());
-        resultMap.put("crawlId",entity.getCrawlId());
-        resultMap.put("crawledAt",entity.getCrawledAt());
-        //날짜/아이디
+        resultMap.put("product", product);
+
+        // comments - CrawlingCommentService의 리스트 반환을 그대로 사용
+        Map<String, Object> commentsMap = crawlingCommentService.listCommentsByCrawlId(crawlId);
+        // commentsMap = { resultCode:200, count:N, content: [CrawlingCommentResponseDTO,...] }
+        resultMap.put("comments", commentsMap.get("content"));
+        resultMap.put("commentsCount", commentsMap.get("count"));
+
         return resultMap;
-    }
-
-
-
-
-
-    // 태스트용-체인별 최신 10개만
-    public List<CrawlingDTO> getLatest10BySourceChain(String sourceChain) {
-        return crawlingRepository
-                .findTop10BySourceChainOrderByCrawlIdAsc(sourceChain)
-                .stream()
-                .map(CrawlingDTO::of)
-                .collect(Collectors.toList());
     }
 
 }

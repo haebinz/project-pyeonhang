@@ -93,6 +93,10 @@ dependencies {
     // 이미지 클라우드
     implementation 'com.cloudinary:cloudinary-http44:1.39.0'
 
+    //이메일 전송
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+
 
 }
 

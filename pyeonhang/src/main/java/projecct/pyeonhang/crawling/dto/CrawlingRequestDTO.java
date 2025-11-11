@@ -26,7 +26,4 @@ public class CrawlingRequestDTO {
 
 
 
-        //private CrawlingEntity.Category category;
-
-
 }

@@ -1,6 +1,7 @@
 package projecct.pyeonhang.crawling.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
@@ -10,11 +11,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import projecct.pyeonhang.common.dto.ApiResponse;
+import projecct.pyeonhang.crawling.dto.CrawlingCommentRequestDTO;
 import projecct.pyeonhang.crawling.dto.CrawlingRequestDTO;
 import projecct.pyeonhang.crawling.entity.CrawlingEntity;
 import projecct.pyeonhang.crawling.repository.CrawlingRepository;
+import projecct.pyeonhang.crawling.service.CrawlingCommentService;
 import projecct.pyeonhang.crawling.service.CrawlingService;
 
 import java.util.HashMap;
@@ -29,6 +33,7 @@ public class CrawlingAPIController {
 
     private final CrawlingService crawlingService;
     private final CrawlingRepository crawlingRepository;
+    private final CrawlingCommentService crawlingCommentService;
 
     //제품 정보 가져오기
     @GetMapping({
@@ -76,113 +81,9 @@ public class CrawlingAPIController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
 
-    /*    //체인별 전체 상품
-    //ex)api/v1/crawl/chain/SEV
-    @GetMapping("/crawl/chain/{sourceChain}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getChain(@PathVariable String sourceChain,
-                                                                    @PageableDefault(size=20,page=0,
-                                                                    sort="price",
-                                                                            direction = Sort.Direction.ASC) Pageable pageable) throws Exception {
-        Map<String,Object> resultMap = crawlingService.getCrawlingBySourceChain(sourceChain,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }*/
-
-    /*//실험용입니다!!!
-    @GetMapping("/crawl") //전체 가져오기 -> 화면에 뜨는지 보기위해서 현재는 10개만 표시하도록
-    public ResponseEntity<Map<String, Object>> getCrawlingAll() throws Exception {
-        Map<String, Object> resultMap = crawlingService.getCrawlingAll();
-        resultMap.put("총개수", crawlingRepository.count());
-        return new ResponseEntity<>(resultMap, HttpStatus.OK);
-    }*/
-    //전체가져오기
-    /*@GetMapping("/crawl")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlAll( @PageableDefault(size=20,page=0,
-            sort="price",
-            direction = Sort.Direction.ASC) Pageable pageable) throws Exception{
-        Map<String,Object> resultMap = crawlingService.getAll(pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }
 
 
-
-
-
-    //체인별 전체 상품
-    //ex)api/v1/crawl/chain/SEV
-    @GetMapping("/crawl/chain/{sourceChain}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getChain(@PathVariable String sourceChain,
-                                                                    @PageableDefault(size=20,page=0,
-                                                                    sort="price",
-                                                                            direction = Sort.Direction.ASC) Pageable pageable) throws Exception {
-        Map<String,Object> resultMap = crawlingService.getCrawlingBySourceChain(sourceChain,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }
-
-    //체인별 전체 상품->카테고리 고르기
-    //ex)crawl/SEV/promo/SNACK
-    @GetMapping("/crawl/{sourceChain}/promo/{productType}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getChainTotal(@PathVariable String sourceChain,
-                                                                         @PathVariable CrawlingEntity.ProductType productType,
-                                                                         @PageableDefault(size=20,page=0,
-                                                                                 sort="price",direction =  Sort.Direction.ASC)Pageable pageable) throws Exception {
-        Map<String,Object> resultMap = crawlingService.getCategoryOfTotal(sourceChain,productType,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-
-    }
-
-    //체인별 제품->행사 유형별
-    //체인/행사유형 입력
-    //ex)crawl/SEV/ONE_PLUS_ONE
-    @GetMapping("/crawl/{sourceChain}/{promoType}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getChainByPromoType(@PathVariable String sourceChain,
-                                                                               @PathVariable CrawlingEntity.PromoType promoType,
-                                                                               @PageableDefault(size=20,page=0,
-                                                                            sort="price",
-                                                                            direction = Sort.Direction.ASC) Pageable pageable) throws Exception {
-        Map<String,Object> resultMap = crawlingService.getByChainAndPromo(sourceChain,promoType,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }
-    //행사유형별 제품(ex->1+1,2+1...)
-    //원하는 행사유형 입력 ex)crawl/promo/ONE_PLUS_ONE
-    @GetMapping("/crawl/promo/{promoType}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawlingByPromoType(
-            @PathVariable CrawlingEntity.PromoType promoType,
-            @PageableDefault(size=20,page=0,
-                    sort="price",
-                    direction=Sort.Direction.ASC) Pageable pageable){
-        Map<String,Object> resultMap= crawlingService.getCrawlingByPromoType(promoType,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }
-
-
-
-    //체인별제품->행사유형->카테고리
-    //ex)crawl/CU/GIFT/LIFE
-    @GetMapping("/crawl/{sourceChain}/{promoType}/{productType}")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> getCategory(@PathVariable String sourceChain,
-                                                                       @PathVariable CrawlingEntity.PromoType promoType,
-                                                                       @PathVariable CrawlingEntity.ProductType productType,
-                                                                       @PageableDefault(size=20,page=0,
-                                                                               sort="price",
-                                                                               direction=Sort.Direction.ASC) Pageable pageable) throws Exception {
-        Map<String,Object> resultMap = crawlingService.getCrawlingBySourceAndProductType(sourceChain,promoType,productType,pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
-    }
-    //제품 검색
-    @GetMapping("/crawl/{sourceChain}/search")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> searchInChain(
-            @PathVariable String sourceChain,
-            @RequestParam(name = "productName", required = false) String productName,
-            @PageableDefault(size=20, page=0, sort="price", direction=Sort.Direction.ASC)
-            Pageable pageable) {
-
-        Map<String,Object> result = crawlingService.searchProducts(sourceChain, productName, pageable);
-        return ResponseEntity.ok(ApiResponse.ok(result));
-    }*/
-
-
-
-    //제품 상세
+    //제품 상세(댓글 추가)
     @GetMapping("/crawl/detail/{crawlId}")
     public ResponseEntity<ApiResponse<Map<String,Object>>> getCrawling(@PathVariable int crawlId) throws Exception {
         Map<String,Object> resultMap = crawlingService.getProductDetail(crawlId);
@@ -215,6 +116,56 @@ public class CrawlingAPIController {
         };
         return ResponseEntity.status(status).body(resultMap);
     }
+
+
+    // 제품 댓글 등록 (로그인 필요)
+    @PostMapping("/crawl/{crawlId}/comment")
+    public ResponseEntity<Map<String,Object>> addComment(
+            @PathVariable Integer crawlId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId,
+            @Valid @ModelAttribute CrawlingCommentRequestDTO dto) {
+
+        Map<String,Object> resultMap = crawlingCommentService.addComment(crawlId, principalUserId, dto);
+        int code = (int) resultMap.getOrDefault("resultCode", 500);
+        HttpStatus status = (code == 200) ? HttpStatus.CREATED : HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(status).body(resultMap);
+    }
+    //댓글 수정
+    @PutMapping("/crawl/comment/{commentId}")
+    public ResponseEntity<Map<String, Object>> updateComment(
+            @PathVariable Integer commentId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId,
+            @RequestParam("content") String content   // form-data(x-www-form-urlencoded) 또는 query param
+    ) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED"));
+        }
+
+        Map<String, Object> resultMap = crawlingCommentService.updateComment(commentId, principalUserId, content);
+        int code = (int) resultMap.getOrDefault("resultCode", 500);
+        HttpStatus status = (code == 200) ? HttpStatus.OK
+                : (code == 403) ? HttpStatus.FORBIDDEN
+                : (code == 404) ? HttpStatus.NOT_FOUND
+                : HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(status).body(resultMap);
+    }
+
+    // 제품 댓글 삭제 (작성자 본인댓글 삭제, - 로그인 필요)
+    @DeleteMapping("/crawl/comment/{commentId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteComment(
+            @PathVariable Integer commentId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId) {
+
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.ok(Map.of("resultCode",401,"resultMessage","UNAUTHORIZED")));
+        }
+        Map<String, Object> resultMap = crawlingCommentService.deleteComment(commentId, principalUserId);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }
+
+
+
 
 
 }
