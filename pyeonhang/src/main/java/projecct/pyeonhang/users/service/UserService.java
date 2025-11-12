@@ -139,6 +139,7 @@ public class UserService {
         usersRepository.save(user);
     }
 
+
     @Value("${app.pwd-reset.code-ttl-seconds:600}")
     private long codeTtlSeconds;
 
@@ -222,6 +223,16 @@ public class UserService {
 
         UsersEntity user = usersRepository.findById(userId).orElseThrow();
         user.setPasswd(passwordEncoder.encode(newPassword));
+        usersRepository.save(user);
+    }
+
+
+    @Transactional
+    public void withdraw(String userId) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        user.setUseYn("Y");
         usersRepository.save(user);
     }
 
