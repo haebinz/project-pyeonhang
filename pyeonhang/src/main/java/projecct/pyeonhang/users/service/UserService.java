@@ -139,7 +139,7 @@ public class UserService {
         usersRepository.save(user);
     }
 
-<<<<<<< HEAD
+
     @Value("${app.pwd-reset.code-ttl-seconds:600}")
     private long codeTtlSeconds;
 
@@ -226,7 +226,7 @@ public class UserService {
         usersRepository.save(user);
     }
 
-=======
+
     @Transactional
     public void withdraw(String userId) {
         UsersEntity user = usersRepository.findById(userId)
@@ -235,7 +235,7 @@ public class UserService {
         user.setUseYn("Y");
         usersRepository.save(user);
     }
->>>>>>> boeun
+
 
 
 

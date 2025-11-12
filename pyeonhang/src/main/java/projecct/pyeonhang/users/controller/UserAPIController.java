@@ -208,8 +208,7 @@ public class UserAPIController {
         }
     }
 
-<<<<<<< HEAD
-=======
+
     @DeleteMapping("/user/delete")
     public ResponseEntity<ApiResponse<Object>> deleteUser(
             @AuthenticationPrincipal(expression = "username")
@@ -231,7 +230,7 @@ public class UserAPIController {
 
 
 
->>>>>>> boeun
+
     //(로그인 기준)찜목록추가
     @PostMapping("/user/wish")
     public ResponseEntity<ApiResponse<Object>> addMyWish(
