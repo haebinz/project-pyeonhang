@@ -28,8 +28,6 @@ public class UsersEntity extends BaseTimeEntity {
     private String email;
 
     @Column( columnDefinition = "CHAR(1)")
-    private String useYn;
-    @Column( columnDefinition = "CHAR(1)")
     @ColumnDefault("N")
     private String delYn;
 
@@ -47,7 +45,6 @@ public class UsersEntity extends BaseTimeEntity {
 
     @PrePersist
     void applyDefaults() {
-        if (useYn == null) useYn = "Y";
         if (delYn == null) delYn = "N";
         if (pointBalance == null) pointBalance = 0;
     }

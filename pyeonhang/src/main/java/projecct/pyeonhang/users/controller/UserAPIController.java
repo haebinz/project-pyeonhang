@@ -37,7 +37,6 @@ public class UserAPIController {
     private final PointsService pointsService;
     private final CouponService couponService;
     private final AttendanceService attendanceService;
-    private final EmailService emailService;
 
     //사용자 가입
     @PostMapping("/user/add")
@@ -219,7 +218,7 @@ public class UserAPIController {
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
         }
         try {
-            userService.withdraw(principalUserId);
+
             return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴가 완료되었습니다."));
         }catch (Exception e) {
             log.info("회원 탈퇴 실패: {}", e.getMessage(), e);

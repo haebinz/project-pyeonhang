@@ -1,5 +1,7 @@
 package projecct.pyeonhang.users.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -31,8 +33,7 @@ public interface UsersRepository extends JpaRepository<UsersEntity,String> {
         u.birth,        
         u.phone,        
         u.email,       
-        u.nickname,     
-        u.use_yn,       
+        u.nickname,          
         u.del_yn,     
         u.create_date,  
         u.update_date,
@@ -50,6 +51,23 @@ public interface UsersRepository extends JpaRepository<UsersEntity,String> {
     @Transactional
     @Query("update UsersEntity u set u.pointBalance = u.pointBalance - :amount where u.userId = :userId and u.pointBalance >= :amount")
     int decrementPointBalanceIfEnough(@Param("userId") String userId, @Param("amount") int amount);
+
+
+    @Query("""
+        select u
+        from UsersEntity u
+        where (:role is null or :role = 'ALL' or u.role.roleId = :role)
+          and (
+                :search is null
+                or lower(u.userId) like concat('%', lower(:search), '%')
+                or lower(u.userName) like concat('%', lower(:search), '%')
+                or lower(u.nickname) like concat('%', lower(:search), '%')
+              )
+        """)
+    Page<UsersEntity> findAllByRoleAndSearch(
+            @Param("role") String role,
+            @Param("search") String search,
+            Pageable pageable);
 
 
 }

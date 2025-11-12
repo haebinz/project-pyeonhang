@@ -10,7 +10,6 @@ public interface AdminUserProjection {
     String getBirth();
     String getPhone();
     String getEmail();
-    String getUseYn();
     String getDelYn();
     Integer getPointBalance();
     LocalDateTime getCreateDate();

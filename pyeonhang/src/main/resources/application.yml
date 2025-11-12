@@ -58,10 +58,7 @@ spring:
         prepStmtCacheSqlLimit: 2048 #sql 최대길이 byte 단위
         useServerPrepStmts: true # 최신기능 지원설정 on
 
-  sql:
-    init:
-      mode: always       # 항상 schema.sql, data.sql 실행
-      platform: mysql    # 사용할 DB 종류
+  # 사용할 DB 종류
 
   jpa:
     database-platform: org.hibernate.dialect.MariaDBDialect

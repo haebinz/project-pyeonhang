@@ -227,14 +227,6 @@ public class UserService {
     }
 
 
-    @Transactional
-    public void withdraw(String userId) {
-        UsersEntity user = usersRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
-        user.setUseYn("Y");
-        usersRepository.save(user);
-    }
 
 
 
