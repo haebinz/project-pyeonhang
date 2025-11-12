@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import projecct.pyeonhang.attendance.service.AttendanceService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.coupon.service.CouponService;
+import projecct.pyeonhang.email.dto.CodeRequest;
 import projecct.pyeonhang.email.service.EmailService;
+import projecct.pyeonhang.email.service.PasswordResetService;
 import projecct.pyeonhang.point.service.PointsService;
 import projecct.pyeonhang.users.dto.*;
 import projecct.pyeonhang.users.service.UserService;
@@ -37,6 +39,7 @@ public class UserAPIController {
     private final PointsService pointsService;
     private final CouponService couponService;
     private final AttendanceService attendanceService;
+    private final PasswordResetService passwordResetService;
 
     //사용자 가입
     @PostMapping("/user/add")
@@ -123,7 +126,12 @@ public class UserAPIController {
         try {
             userService.changeMyPassword(principalUserId, request);
             return ResponseEntity.ok(ApiResponse.ok("비밀번호 변경 완료"));
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+                log.info("비밀번호 변경 실패(입력오류): {}", e.getMessage());
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        }catch (Exception e) {
             log.info("비밀번호 변경 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("비밀번호 변경 실패"));
         }
@@ -143,6 +151,57 @@ public class UserAPIController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail("아이디 찾기 실패"));
+        }
+    }
+
+
+    @PostMapping("/user/password/findPw")
+    public ResponseEntity<?> sendEmail(@Valid @ModelAttribute UserPasswordRequest request,HttpSession session) {
+        try {
+            // 이메일,아이디 검증 코드 생성/전송
+            passwordResetService.requestPasswordReset(request.getUserId(), request.getEmail());
+
+            // 세션에 userId/email 저장
+            session.setAttribute("PWD_RESET_USER", request.getUserId());
+            session.setAttribute("PWD_RESET_EMAIL", request.getEmail());
+
+            return ResponseEntity.ok(ApiResponse.ok("인증 코드 전송됨"));
+        } catch (IllegalArgumentException e) {
+            log.info("비밀번호 재설정 요청 실패(입력오류): {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 요청 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("인증 코드 전송에 실패했습니다."));
+        }
+    }
+
+    @PostMapping("/user/password/confirmCode")
+    public ResponseEntity<?> verifyCode(
+            @Valid @ModelAttribute CodeRequest request,
+            HttpSession session) {
+
+        String userId = (String) session.getAttribute("PWD_RESET_USER");
+        String email  = (String) session.getAttribute("PWD_RESET_EMAIL");
+
+        if (userId == null || email == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail("세션이 존재하지 않습니다. 먼저 아이디/이메일 인증을 진행하세요."));
+        }
+
+        try {
+            boolean ok = passwordResetService.verifyCode(userId, email, request.getCode());
+            if (ok) {
+                passwordResetService.markVerified(userId, email, request.getCode());
+                session.setAttribute("PWD_RESET_USER", userId);
+                return ResponseEntity.ok(ApiResponse.ok("코드 인증 성공"));
+            } else {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("코드 인증 실패"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
         }
     }
     /*
@@ -182,28 +241,29 @@ public class UserAPIController {
     @PostMapping("/user/password/reset")
     public ResponseEntity<ApiResponse<Object>> resetPassword(
             @Valid @ModelAttribute UserPasswordResetRequest request,
-            HttpSession session
-    ) {
-        // 1단계에서 저장한 사용자 아이디 가져오기
+            HttpSession session) {
+
         String userId = (String) session.getAttribute("PWD_RESET_USER");
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "비밀번호 변경 권한이 없습니다. 다시 인증을 진행해주세요."));
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "비밀번호 변경 권한이 없습니다. 다시 인증을 진행해주세요."));
         }
 
         try {
             userService.resetPasswordForUserId(userId, request.getNewPassword(), request.getConfirmNewPassword());
-
-            // 사용 후 세션에서 제거
             session.removeAttribute("PWD_RESET_USER");
-
-            Map<String, Object> res = new HashMap<>();
-            res.put("resultCode", 200);
-            res.put("resultMessage", "PASSWORD_CHANGED");
-            return ResponseEntity.ok(ApiResponse.ok("비밀번호 변경 완료"));
+            return ResponseEntity.ok(ApiResponse.ok("비밀번호 변경 완료.새로 로그인 해주세요"));
+        } catch (IllegalArgumentException e) {
+            log.info("비밀번호 변경 실패(입력오류): {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         } catch (Exception e) {
-            log.info("비밀번호 변경 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("비밀번호 변경 실패"));
+            log.error("비밀번호 변경 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("비밀번호 변경 실패"));
         }
     }
 
