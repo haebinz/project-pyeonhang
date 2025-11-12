@@ -3,15 +3,21 @@ package projecct.pyeonhang.users.service;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import projecct.pyeonhang.common.utils.HashUtils;
+import projecct.pyeonhang.email.entity.EmailEntity;
+import projecct.pyeonhang.email.repository.EmailRepository;
+import projecct.pyeonhang.email.service.EmailService;
 import projecct.pyeonhang.users.dto.*;
 import projecct.pyeonhang.users.entity.UserRoleEntity;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UserRoleRepository;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +28,8 @@ public class UserService {
     private final UsersRepository usersRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailRepository emailRepository;
+    private final EmailService emailService;
 
     //사용자 추가
     public void addUser(UserRequest userRequest) throws Exception{
@@ -126,6 +134,92 @@ public class UserService {
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
+        user.setPasswd(passwordEncoder.encode(newPassword));
+        usersRepository.save(user);
+    }
+
+    @Value("${app.pwd-reset.code-ttl-seconds:600}")
+    private long codeTtlSeconds;
+
+    // 1) 아이디+이메일 검증 -> 코드 생성 -> DB(해시) 저장 -> 이메일 전송
+    @Transactional
+    public void requestPasswordReset(String userId, String email) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        if (!user.getEmail().equalsIgnoreCase(email)) {
+            throw new IllegalArgumentException("userId와 email이 일치하지 않습니다.");
+        }
+
+        String code = emailService.createCode();            // 원본 코드 (메일로 보낼 것)
+        String codeHash = HashUtils.sha256Hex(code);        // DB에는 해시 저장
+
+        EmailEntity ev = new EmailEntity();
+        ev.setUser(user);
+        ev.setEmail(email);
+        ev.setCodeHash(codeHash);
+        ev.setExpiresAt(LocalDateTime.now().plusSeconds(codeTtlSeconds));
+        ev.setVerifiedYn("N");
+        emailRepository.save(ev);
+
+        boolean sent = emailService.sendAuthMail(email, code);
+        if (!sent) {
+            throw new IllegalStateException("인증 코드 메일 전송 실패");
+        }
+    }
+
+    // 2) 코드 검증 (단순 확인용) — true면 OK
+    @Transactional(readOnly = true)
+    public boolean verifyCode(String userId, String email, String code) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        EmailEntity ev = emailRepository
+                .findTopByUserAndEmailOrderByCreatedAtDesc(user, email)
+                .orElseThrow(() -> new IllegalArgumentException("인증 이력이 없습니다."));
+
+        if ("Y".equalsIgnoreCase(ev.getVerifiedYn())) {
+            throw new IllegalArgumentException("이미 사용된 인증 코드입니다.");
+        }
+
+        if (ev.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("인증 코드가 만료되었습니다.");
+        }
+
+        String providedHash = HashUtils.sha256Hex(code);
+        if (!providedHash.equalsIgnoreCase(ev.getCodeHash())) {
+            throw new IllegalArgumentException("인증 코드가 일치하지 않습니다.");
+        }
+
+        return true;
+    }
+
+    // 3) 검증 확정(verifiedYn = 'Y')
+    @Transactional
+    public void markVerified(String userId, String email, String code) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        EmailEntity ev = emailRepository
+                .findTopByUserAndEmailOrderByCreatedAtDesc(user, email)
+                .orElseThrow(() -> new IllegalArgumentException("인증 이력이 없습니다."));
+
+        String providedHash = HashUtils.sha256Hex(code);
+        if (!providedHash.equalsIgnoreCase(ev.getCodeHash())) {
+            throw new IllegalArgumentException("인증 코드가 일치하지 않습니다.");
+        }
+
+        ev.setVerifiedYn("Y");
+        emailRepository.save(ev);
+    }
+
+    // 4) (선택) 세션 없이 바로 비밀번호 변경하려면 이 메서드 사용
+    @Transactional
+    public void verifyAndResetPassword(String userId, String email, String code, String newPassword) {
+        if (!verifyCode(userId, email, code)) throw new IllegalArgumentException("인증 실패");
+        markVerified(userId, email, code);
+
+        UsersEntity user = usersRepository.findById(userId).orElseThrow();
         user.setPasswd(passwordEncoder.encode(newPassword));
         usersRepository.save(user);
     }

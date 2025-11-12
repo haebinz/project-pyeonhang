@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import projecct.pyeonhang.attendance.service.AttendanceService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.coupon.service.CouponService;
+import projecct.pyeonhang.email.service.EmailService;
 import projecct.pyeonhang.point.service.PointsService;
 import projecct.pyeonhang.users.dto.*;
 import projecct.pyeonhang.users.service.UserService;
@@ -36,6 +37,7 @@ public class UserAPIController {
     private final PointsService pointsService;
     private final CouponService couponService;
     private final AttendanceService attendanceService;
+    private final EmailService emailService;
 
     //사용자 가입
     @PostMapping("/user/add")
@@ -59,6 +61,7 @@ public class UserAPIController {
                     .body(ApiResponse.fail("회원가입 실패"));
         }
     }
+
     //(로그인 기준)자기 정보 가져오기
     @GetMapping("/user/info")
     public ResponseEntity<ApiResponse<Object>> userInfo(
@@ -73,12 +76,12 @@ public class UserAPIController {
             UserDTO me = userService.findMe(principalUserId);
 
             Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("userId",   me.getUserId());
+            resultMap.put("userId", me.getUserId());
             resultMap.put("username", me.getUserName());
-            resultMap.put("email",    me.getEmail());
-            resultMap.put("phone",    me.getPhone());
+            resultMap.put("email", me.getEmail());
+            resultMap.put("phone", me.getPhone());
             resultMap.put("nickname", me.getNickname());
-            resultMap.put("birth",    me.getBirth());
+            resultMap.put("birth", me.getBirth());
 
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
@@ -106,6 +109,7 @@ public class UserAPIController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("내 정보 변경 실패"));
         }
     }
+
     //(로그인 기준)비밀번호 수정
     @PutMapping("/user/password/change")
     public ResponseEntity<ApiResponse<Object>> changePassword(
@@ -117,8 +121,8 @@ public class UserAPIController {
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
         }
-        try{
-            userService.changeMyPassword(principalUserId,request);
+        try {
+            userService.changeMyPassword(principalUserId, request);
             return ResponseEntity.ok(ApiResponse.ok("비밀번호 변경 완료"));
         } catch (Exception e) {
             log.info("비밀번호 변경 실패: {}", e.getMessage(), e);
@@ -126,7 +130,6 @@ public class UserAPIController {
         }
 
     }
-
 
 
     //(비로그인)아이디 찾기
@@ -156,7 +159,7 @@ public class UserAPIController {
         }
     }
     */
-
+    /*
     //(비로그인 기준)이메일로 인증
     @PostMapping("/user/password/verify")
     public ResponseEntity<ApiResponse<Object>> verifyIdEmail(
@@ -170,11 +173,11 @@ public class UserAPIController {
             session.setAttribute("PWD_RESET_USER", request.getUserId());
 
             return ResponseEntity.ok(ApiResponse.ok("비밀번호 찾기 성공"));
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.info("비밀번호 찾기 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(),"비밀번호 찾기 실패"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "비밀번호 찾기 실패"));
         }
-    }
+    }*/
 
     //(비로그인 기준)비밀번호 초기화
     @PostMapping("/user/password/reset")
@@ -186,7 +189,7 @@ public class UserAPIController {
         String userId = (String) session.getAttribute("PWD_RESET_USER");
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(),"비밀번호 변경 권한이 없습니다. 다시 인증을 진행해주세요."));
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "비밀번호 변경 권한이 없습니다. 다시 인증을 진행해주세요."));
         }
 
         try {
@@ -198,13 +201,14 @@ public class UserAPIController {
             Map<String, Object> res = new HashMap<>();
             res.put("resultCode", 200);
             res.put("resultMessage", "PASSWORD_CHANGED");
-            return ResponseEntity.ok(ApiResponse.ok("비밀번호 변경 완료"));   
-        } catch(Exception e) {
+            return ResponseEntity.ok(ApiResponse.ok("비밀번호 변경 완료"));
+        } catch (Exception e) {
             log.info("비밀번호 변경 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("비밀번호 변경 실패"));
         }
 
     }
+
     //(로그인 기준)찜목록추가
     @PostMapping("/user/wish")
     public ResponseEntity<ApiResponse<Object>> addMyWish(
@@ -217,17 +221,15 @@ public class UserAPIController {
                     .body(ApiResponse.ok(new HashMap<>()));
         }
 
-        try{
+        try {
             Map<String, Object> res = wishListService.addWish(principalUserId, crawlId);
             return ResponseEntity.ok(ApiResponse.ok(res));
-        }catch(Exception e){
+        } catch (Exception e) {
             log.info("찜 추가 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("찜 추가 실패"));
         }
 
     }
-
-
 
 
     //(로그인 기준)찜 목록 가져오기
@@ -243,7 +245,7 @@ public class UserAPIController {
         try {
             Map<String, Object> res = wishListService.listMyWish(principalUserId);
             return ResponseEntity.ok(ApiResponse.ok(res));
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.info("찜 목록 가져오기 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("찜 목록 가져오기 실패"));
         }
@@ -264,7 +266,7 @@ public class UserAPIController {
         try {
             Map<String, Object> res = wishListService.removeWish(principalUserId, crawlId);
             return ResponseEntity.ok(ApiResponse.ok(res));
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.info("찜 삭제 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("찜 삭제 실패"));
         }
@@ -272,7 +274,7 @@ public class UserAPIController {
 
     //(로그인 기준) 포인트 리스트 가져오기
     @GetMapping("/user/points")
-    public ResponseEntity<ApiResponse<Object>>myPoints(
+    public ResponseEntity<ApiResponse<Object>> myPoints(
             @AuthenticationPrincipal(expression = "username") String principalUserId
     ) {
         if (principalUserId == null) {
@@ -283,7 +285,7 @@ public class UserAPIController {
         try {
             Map<String, Object> resultMap = pointsService.listMyPoints(principalUserId);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.info("포인트 리스트 가져오기 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("포인트 리스트 가져오기 실패"));
         }
@@ -300,7 +302,7 @@ public class UserAPIController {
         try {
             Map<String, Object> resultMap = couponService.getCouponList(pageable);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
-        } catch(Exception e) {
+        } catch (Exception e) {
             log.info("쿠폰 목록 가져오기 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("쿠폰목록 가져오기 실패"));
         }
@@ -313,13 +315,13 @@ public class UserAPIController {
             @PathVariable int couponId,
             @AuthenticationPrincipal(expression = "username") String principalUserId
     ) throws Exception {
-        Map<String,Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
         if (principalUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
         }
-        try{
-            Map<String,Object> res = couponService.exchangeCoupon(principalUserId, couponId);
+        try {
+            Map<String, Object> res = couponService.exchangeCoupon(principalUserId, couponId);
             return ResponseEntity.ok(ApiResponse.ok(res));
         } catch (Exception e) {
             log.info("쿠폰 교환 실패: {}", e.getMessage(), e);
@@ -336,14 +338,14 @@ public class UserAPIController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
         }
-        try{
+        try {
             Map<String, Object> result = couponService.listMyCoupons(principalUserId);
             return ResponseEntity.ok(ApiResponse.ok(result));
         } catch (Exception e) {
             log.info("보유 쿠폰 목록 가져오기 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("보유 쿠폰 목록 가져오기 실패"));
         }
-        
+
     }
 
     //수동으로 출석체크하기(옵션)
@@ -355,7 +357,7 @@ public class UserAPIController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
         }
-        
+
         try {
             Map<String, Object> resultMap = attendanceService.checkAttendance(principalUserId);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
@@ -363,7 +365,7 @@ public class UserAPIController {
             log.info("출석 체크 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("출석 체크 실패"));
         }
-       
+
     }
 
     //출석체크한날 리스트
@@ -385,8 +387,6 @@ public class UserAPIController {
         }
 
     }
-
-
 
 
 }

@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.Random;
 
 @Slf4j
@@ -18,51 +20,40 @@ public class EmailService {
 
     private final JavaMailSender javaMailSender;
 
-    @Value("{spring.mail.username}")
-    private static String senderEmail;
+    @Value("${spring.mail.username}")
+    private String senderEmail;
+
+    private final SecureRandom random = new SecureRandom();
 
     public String createCode() {
-        Random random = new Random();
-        StringBuilder key = new StringBuilder();
-
-        for (int i = 0; i < 6; i++) { // 인증 코드 6자리
-            int index = random.nextInt(2); // 0~1까지 랜덤, 랜덤값으로 switch문 실행
-
-            switch (index) {
-                case 0 -> key.append((char) (random.nextInt(26) + 65)); // 대문자
-                case 1 -> key.append(random.nextInt(10)); // 숫자
-            }
-        }
-        return key.toString();
+        return String.format("%06d", random.nextInt(999999));
     }
 
-    public MimeMessage createMail(String mail, String authCode) throws MessagingException {
+    private MimeMessage createMessage(String to, String authCode) throws MessagingException {
         MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
 
-        message.setFrom(senderEmail);
-        message.setRecipients(MimeMessage.RecipientType.TO, mail);
-        message.setSubject("이메일 인증");
-        String body = "";
-        body += "<h3>요청하신 인증 번호입니다.</h3>";
-        body += "<h1>" + authCode + "</h1>";
-        body += "<h3>감사합니다.</h3>";
-        message.setText(body, "UTF-8", "html");
+        helper.setFrom(senderEmail);
+        helper.setTo(to);
+        helper.setSubject("[PYEONHANG] 비밀번호 재설정 인증 코드");
 
+        String body = """
+                <h3>비밀번호 재설정을 위한 인증코드입니다.</h3>
+                <h2>%s</h2>
+                <p>10분 안에 입력해주세요.</p>
+                """.formatted(authCode);
+
+        helper.setText(body, true);
         return message;
     }
 
-    // 메일 발송
-    public boolean sendSimpleMessage(String sendEmail) throws MessagingException {
-        String authCode = createCode(); // 랜덤 인증번호 생성
-
-        MimeMessage message = createMail(sendEmail, authCode); // 메일 생성
+    public boolean sendAuthMail(String to, String code) {
         try {
-            javaMailSender.send(message); // 메일 발송
+            javaMailSender.send(createMessage(to, code));
             return true;
-        } catch (MailException e) {
+        } catch (MailException | MessagingException e) {
+            log.error("메일 전송 실패 = {}", e.getMessage());
             return false;
         }
     }
-
-
 }
