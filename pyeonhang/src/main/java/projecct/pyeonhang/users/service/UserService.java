@@ -12,6 +12,7 @@ import projecct.pyeonhang.email.entity.EmailEntity;
 import projecct.pyeonhang.email.repository.EmailRepository;
 import projecct.pyeonhang.email.service.EmailService;
 import projecct.pyeonhang.users.dto.*;
+import projecct.pyeonhang.users.entity.QUsersEntity;
 import projecct.pyeonhang.users.entity.UserRoleEntity;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UserRoleRepository;
@@ -138,6 +139,7 @@ public class UserService {
         usersRepository.save(user);
     }
 
+<<<<<<< HEAD
     @Value("${app.pwd-reset.code-ttl-seconds:600}")
     private long codeTtlSeconds;
 
@@ -224,6 +226,16 @@ public class UserService {
         usersRepository.save(user);
     }
 
+=======
+    @Transactional
+    public void withdraw(String userId) {
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        user.setUseYn("Y");
+        usersRepository.save(user);
+    }
+>>>>>>> boeun
 
 
 

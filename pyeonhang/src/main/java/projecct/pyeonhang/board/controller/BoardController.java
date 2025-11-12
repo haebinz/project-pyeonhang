@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/board")
+@RequestMapping("/api/v1/board")
 @RequiredArgsConstructor
 public class BoardController {
     private final BoardService boardService;
@@ -30,9 +30,9 @@ public class BoardController {
     public ApiResponse<Page<BoardDto>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String searchType,   // TITLE or TITLE_CONTENT
+            @RequestParam(required = false) String searchType, // TITLE or TITLE_CONTENT
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "LATEST") String sortType  // LATEST or LIKE
+            @RequestParam(defaultValue = "LATEST") String sortType // LATEST or LIKE
     ) {
         Page<BoardDto> data = boardService.getBoardPage(page, size, searchType, keyword, sortType);
         return ApiResponse.ok(data);
@@ -43,12 +43,10 @@ public class BoardController {
     @GetMapping("/{id}")
     public ApiResponse<BoardDto> get(
             @PathVariable Integer id,
-            @AuthenticationPrincipal UserDetails user
-    ) {
+            @AuthenticationPrincipal UserDetails user) {
         BoardDto dto = boardService.getBoard(id);
         return ApiResponse.ok(dto);
     }
-
 
     // 게시글 등록 api/board
     // Authorization: Bearer token, Content-Type: application/json
@@ -58,19 +56,17 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("contents") String contents,
             @RequestPart(value = "file", required = false) MultipartFile file,
-            @AuthenticationPrincipal UserDetails user
-    ) throws Exception {
+            @AuthenticationPrincipal UserDetails user) throws Exception {
 
         System.out.println("▶ createWithFile 진입, title=" + title
                 + ", user=" + (user != null ? user.getUsername() : "null")
                 + ", file=" + (file != null ? file.getOriginalFilename() : "null"));
 
-
-        if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
+        if (user == null)
+            return ApiResponse.fail("로그인이 필요합니다.");
         Integer id = boardService.create(title, contents, user.getUsername(), file);
         return ApiResponse.ok(id);
     }
-
 
     // 게시글 수정 api/board/{{게시글 ID}}
     // Authorization: Bearer token, Content-Type: application/json
@@ -82,9 +78,9 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("contents") String contents,
             @RequestPart(value = "file", required = false) MultipartFile file,
-            @AuthenticationPrincipal UserDetails user
-    ) throws Exception {
-        if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
+            @AuthenticationPrincipal UserDetails user) throws Exception {
+        if (user == null)
+            return ApiResponse.fail("로그인이 필요합니다.");
         boolean isAdmin = user.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         boardService.update(id, title, contents, user.getUsername(), isAdmin, file);
@@ -95,7 +91,8 @@ public class BoardController {
     // Authorization: Bearer token
     @DeleteMapping("/{id}")
     public ApiResponse<Object> delete(@PathVariable Integer id, @AuthenticationPrincipal UserDetails user) {
-        if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
+        if (user == null)
+            return ApiResponse.fail("로그인이 필요합니다.");
         boolean isAdmin = user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         boardService.delete(id, user.getUsername(), isAdmin);
         return ApiResponse.ok(null);
@@ -105,10 +102,9 @@ public class BoardController {
     @PostMapping("/{id}/like")
     public ApiResponse<Object> like(
             @PathVariable("id") Integer id,
-            @AuthenticationPrincipal UserDetails user
-    ) {
+            @AuthenticationPrincipal UserDetails user) {
         if (user == null) {
-            return ApiResponse.fail(500,"로그인이 필요합니다.");
+            return ApiResponse.fail(500, "로그인이 필요합니다.");
         }
 
         int likeCount = boardService.like(id, user.getUsername());
@@ -119,8 +115,7 @@ public class BoardController {
     @GetMapping("/{id}/comments")
     public ApiResponse<List<BoardCommentDto>> comments(
             @PathVariable("id") Integer boardId,
-            @AuthenticationPrincipal UserDetails user
-    ) {
+            @AuthenticationPrincipal UserDetails user) {
         String currentUserId = (user != null ? user.getUsername() : null);
         List<BoardCommentDto> list = boardCommentService.list(boardId, currentUserId);
         return ApiResponse.ok(list);
@@ -131,9 +126,9 @@ public class BoardController {
     public ApiResponse<Object> createComment(
             @PathVariable("id") Integer boardId,
             @RequestBody Map<String, String> body,
-            @AuthenticationPrincipal UserDetails user
-    ) {
-        if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
+            @AuthenticationPrincipal UserDetails user) {
+        if (user == null)
+            return ApiResponse.fail("로그인이 필요합니다.");
 
         String content = body.get("content");
         if (content == null || content.isBlank()) {
@@ -150,9 +145,9 @@ public class BoardController {
             @PathVariable Integer boardId,
             @PathVariable Integer commentId,
             @RequestBody Map<String, String> body,
-            @AuthenticationPrincipal UserDetails user
-    ) {
-        if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
+            @AuthenticationPrincipal UserDetails user) {
+        if (user == null)
+            return ApiResponse.fail("로그인이 필요합니다.");
         String content = body.get("content");
         if (content == null || content.isBlank()) {
             return ApiResponse.fail("댓글 내용을 입력해주세요.");
@@ -170,9 +165,9 @@ public class BoardController {
     public ApiResponse<Object> deleteComment(
             @PathVariable Integer boardId,
             @PathVariable Integer commentId,
-            @AuthenticationPrincipal UserDetails user
-    ) {
-        if (user == null) return ApiResponse.fail("로그인이 필요합니다.");
+            @AuthenticationPrincipal UserDetails user) {
+        if (user == null)
+            return ApiResponse.fail("로그인이 필요합니다.");
 
         boolean isAdmin = user.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -181,5 +176,9 @@ public class BoardController {
         return ApiResponse.ok(null);
     }
 
-    @Data static class BoardReq { private String title; private String contents; }
+    @Data
+    static class BoardReq {
+        private String title;
+        private String contents;
+    }
 }
