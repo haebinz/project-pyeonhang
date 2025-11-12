@@ -23,6 +23,6 @@ public class SecureUserDetailService implements UserDetailsService {
 
 
         return new UserSecureDTO(entity.getUserId(), entity.getUserName(),
-                entity.getPasswd(), entity.getRole().getRoleId()) ;
+                entity.getPasswd(), entity.getRole().getRoleId(), entity.getDelYn()) ;
     }
 }

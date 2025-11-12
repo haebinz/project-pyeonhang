@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -223,7 +224,7 @@ public class UserAPIController {
             return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴가 완료되었습니다."));
         }catch (Exception e) {
             log.info("회원 탈퇴 실패: {}", e.getMessage(), e);
-            return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴 실패"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("회원 탈퇴 실패"));
         }
     }
 

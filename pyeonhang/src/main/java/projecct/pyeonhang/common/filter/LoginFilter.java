@@ -39,10 +39,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         String username = obtainUsername(request);
         String password = obtainPassword(request);
-
+        
+        
         UsernamePasswordAuthenticationToken authRequest =
-                UsernamePasswordAuthenticationToken.unauthenticated(username, password);
-
+        UsernamePasswordAuthenticationToken.unauthenticated(username, password);
+        
+        authRequest.setDetails(request.getParameter("delYn"));
+        
         return authenticationManager.authenticate(authRequest);
     }
 
@@ -56,6 +59,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         UserSecureDTO user = (UserSecureDTO) authResult.getPrincipal();
         String userId = user.getUserId();
         String userName = user.getUserName();
+        String userDelYn = user.getDelYn();
 
         //권한 > 현재 한개니까 하나만 추출하자
         Iterator<? extends GrantedAuthority> iter =  authResult.getAuthorities().iterator();
@@ -63,9 +67,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         //토큰 생성
         String accessToken = jwtUtils.createJwt("access", userId, userName,
-                userRole, ACCESS_TOKEN_EXPIRE_TIME);
+                userRole, userDelYn, ACCESS_TOKEN_EXPIRE_TIME);
         String refreshToken = jwtUtils.createJwt("refresh", userId, userName,
-                userRole, REFRESH_TOKEN_EXPIRE_TIME);
+                userRole, userDelYn, REFRESH_TOKEN_EXPIRE_TIME);
 
         //응답을 설정
         response.setHeader("Authorization", accessToken);

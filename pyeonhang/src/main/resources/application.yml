@@ -60,7 +60,7 @@ spring:
 
   sql:
     init:
-      mode: always       # 항상 schema.sql, data.sql 실행
+      mode: never       # 항상 schema.sql, data.sql 실행
       platform: mysql    # 사용할 DB 종류
 
   jpa:
@@ -70,7 +70,7 @@ spring:
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: update #개발환경에서는 update, 보통 validate
+      ddl-auto: validate #개발환경에서는 update, 보통 validate
     properties:
       hibernate:
         generate_statistics: false

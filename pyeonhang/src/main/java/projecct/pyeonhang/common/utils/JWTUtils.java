@@ -26,15 +26,16 @@ public class JWTUtils {
                 Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
-    //사용자 아이디, 권한, 이름, 지속시간(분)
+    //사용자 아이디, 권한, 이름, 탈퇴여부, 지속시간(분)
     public String createJwt(String category, String userId,
-                            String userName, String userRole, Long mins) {
+                            String userName, String userRole, String userDelYn, Long mins) {
 
         return Jwts.builder()
                 .claim("category", category)
                 .claim("userId", userId)
                 .claim("userName", userName)
                 .claim("userRole", userRole)
+                .claim("userDelYn", userDelYn)
                 .issuedAt(Timestamp.valueOf(LocalDateTime.now()))
                 .expiration(Timestamp.valueOf( LocalDateTime.now().plusMinutes(mins) ))
                 .signWith(secretKey)
@@ -92,6 +93,14 @@ public class JWTUtils {
         return Jwts.parser().verifyWith(secretKey)
                 .build().parseSignedClaims(token)
                 .getPayload().get("userRole", String.class);
+    }
+
+    // 삭제 여부 추출(로그인 시 탈퇴한 회원 막기 위해)
+    public String getDelYn(String token) {
+
+        return Jwts.parser().verifyWith(secretKey)
+                .build().parseSignedClaims(token)
+                .getPayload().get("userDelYn", String.class);
     }
 
 

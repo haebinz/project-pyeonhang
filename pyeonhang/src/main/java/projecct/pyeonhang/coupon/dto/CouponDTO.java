@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CouponDTO {
 
-
+    private int couponId;
     private String couponName;
     private String description;
     private Integer requiredPoint;
@@ -27,6 +27,7 @@ public class CouponDTO {
         LocalDateTime last =
                 entity.getUpdateDate() == null ? entity.getCreateDate() : entity.getUpdateDate();
         return CouponDTO.builder()
+                .couponId(entity.getCouponId())
                 .couponName(entity.getCouponName())
                 .description(entity.getDescription())
                 .requiredPoint(entity.getRequiredPoint())

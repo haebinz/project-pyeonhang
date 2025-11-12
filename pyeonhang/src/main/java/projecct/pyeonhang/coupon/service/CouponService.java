@@ -43,7 +43,7 @@ public class CouponService {
     private String filePath;
 
     private List<String> extentions =
-            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp");
+            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp", "svg");
 
     @Transactional
     public void registerCoupon(CouponRequestDTO request) throws Exception {

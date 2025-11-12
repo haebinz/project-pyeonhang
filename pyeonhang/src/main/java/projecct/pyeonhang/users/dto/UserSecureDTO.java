@@ -16,13 +16,20 @@ public class UserSecureDTO extends User {
 
     private String userId;
     private String userName;
+    private String delYn;    
 
-    public UserSecureDTO(String userId, String userName, String passwd, String userRole) {
+    public UserSecureDTO(String userId, String userName, String passwd, String userRole, String delYn) {
         super(userId, passwd, makeGrantedAuthorities(userRole));
 
         this.userId = userId;
         this.userName = userName;
+        this.delYn = delYn;        
     }
+
+    @Override
+    public boolean isEnabled() {
+        return !"Y".equals(delYn); // delYn이 'Y'면 false 반환 -> 로그인 실패
+    }    
 
     //생성자에서 사용해야하기 때문에 static 으로 처리
     private static List<GrantedAuthority> makeGrantedAuthorities(String userRole) {

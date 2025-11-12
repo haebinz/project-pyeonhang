@@ -1,9 +1,8 @@
-DROP DATABASE cp_db;
-CREATE DATABASE cp_db;
+
 USE cp_db;
 
 -- 1) 권한
-CREATE TABLE user_role (
+CREATE TABLE IF NOT EXISTS user_role (
                            role_id      VARCHAR(255) NOT NULL COMMENT '아이디',
                            role_name    VARCHAR(255) NOT NULL COMMENT '이름',
                            use_yn       CHAR(1) DEFAULT 'Y' COMMENT 'Y,N',
@@ -13,7 +12,7 @@ CREATE TABLE user_role (
 );
 
 -- 2) 사용자 (gender/addr/addr_detail 제거 반영, email UNIQUE, FK -> user_role)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
                        user_id        VARCHAR(100)  NOT NULL COMMENT '사용자 아이디',
                        passwd         VARCHAR(255)  NOT NULL COMMENT '패스워드',
                        user_name      VARCHAR(100)  NOT NULL COMMENT '사용자 이름',
@@ -21,7 +20,6 @@ CREATE TABLE users (
                        birth          VARCHAR(100)  NOT NULL COMMENT '생년월일',
                        phone          VARCHAR(100)  NOT NULL COMMENT '전화번호',
                        email          VARCHAR(100)  NOT NULL COMMENT '이메일',
-                       use_yn         CHAR(1) DEFAULT 'Y' COMMENT '사용여부,Y,N',
                        del_yn         CHAR(1) DEFAULT 'N' COMMENT '삭제여부,Y,N',
                        user_role      VARCHAR(50) DEFAULT 'USER' COMMENT '권한',
                        create_date    DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '생성일',
@@ -34,14 +32,14 @@ CREATE TABLE users (
 );
 
 -- 3) 편의점 체인
-CREATE TABLE chains (
+CREATE TABLE IF NOT EXISTS chains (
                         chain_id    BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '편의점 아이디',
                         chain_code  VARCHAR(20)  NOT NULL UNIQUE COMMENT '편의점 코드(GS25/7-eleven/CU)',
                         chain_name  VARCHAR(100) NOT NULL COMMENT '편이점 이름'
 );
 
 -- 4) 카테고리
-CREATE TABLE category (
+CREATE TABLE IF NOT EXISTS category (
                           category_id    INT AUTO_INCREMENT PRIMARY KEY COMMENT '카테고리 아이디',
                           category_code  VARCHAR(100) NOT NULL COMMENT '카테고리 코드',
                           category_name  VARCHAR(100) NOT NULL COMMENT '카테고리 이름',
@@ -50,7 +48,7 @@ CREATE TABLE category (
 
 
 -- 6) 크롤링 상품
-CREATE TABLE craw_product (
+CREATE TABLE IF NOT EXISTS craw_product (
                               crawl_id       BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '크롤링 데이터 ID',
                               source_chain   VARCHAR(20)  NOT NULL COMMENT '출처 편의점 코드 (GS25 / CU / SEV 등)',
                               product_name   VARCHAR(200) NOT NULL COMMENT '상품명',
@@ -64,7 +62,7 @@ CREATE TABLE craw_product (
                               crawled_at     DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '수집 시각'
 );
 --제품 댓글
-create table crawling_comment(
+CREATE TABLE IF NOT EXISTS crawling_comment(
                                  comment_id int auto_increment primary key not null comment '댓글 아이디',
                                  crawl_id BIGINT not null comment '상품 아이디',
                                  user_id    VARCHAR(100) not null comment '사용자 아이디',
@@ -79,7 +77,7 @@ create table crawling_comment(
 );
 
 -- 7) 위시리스트 (users, craw_product FK, ON DELETE CASCADE)
-CREATE TABLE wish_list (
+CREATE TABLE IF NOT EXISTS wish_list (
                            user_id   VARCHAR(100) NOT NULL COMMENT '사용자 아이디',
                            crawl_id  BIGINT NOT NULL COMMENT '크롤링 데이터 ID',
                            PRIMARY KEY (user_id, crawl_id),
@@ -90,7 +88,7 @@ CREATE TABLE wish_list (
 );
 
 -- 8) 포인트 (update_date 추가 반영)
-CREATE TABLE points (
+CREATE TABLE IF NOT EXISTS points (
                         id int auto_increment primary key comment '포인트 아이디',
                         user_id VARCHAR(100) NOT NULL COMMENT '사용자 ID',
                         source_type ENUM('ADMIN_GRANT','ATTENDANCE','COUPON_EXCHANGE') NOT NULL COMMENT '포인트 지급 유형',
@@ -102,7 +100,7 @@ CREATE TABLE points (
 );
 
 -- 9) 게시판
-CREATE TABLE board (
+CREATE TABLE IF NOT EXISTS board (
                        brd_id       INT AUTO_INCREMENT PRIMARY KEY NOT NULL COMMENT '게시판 아이디',
                        user_id      VARCHAR(100)  NOT NULL COMMENT '사용자 아이디',
                        title        VARCHAR(100) NOT NULL COMMENT '게시글 제목',
@@ -117,7 +115,7 @@ CREATE TABLE board (
 );
 
 -- 10) 게시판 파일 (ON DELETE CASCADE)
-CREATE TABLE board_files (
+CREATE TABLE IF NOT EXISTS board_files (
                              bf_id        INT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '파일번호',
                              brd_id       INT NOT NULL COMMENT '게시글번호',
                              file_name    VARCHAR(255) NOT NULL COMMENT '파일 원본이름',
@@ -130,7 +128,7 @@ CREATE TABLE board_files (
 );
 
 -- 게시글 추천기능
-CREATE TABLE board_like (
+CREATE TABLE IF NOT EXISTS board_like (
                             board_like_id INT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 추천 ID',
                             brd_id        INT NOT NULL COMMENT '게시글 ID',
                             user_id       VARCHAR(100) NOT NULL COMMENT '추천한 사용자 ID',
@@ -144,7 +142,7 @@ CREATE TABLE board_like (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='게시글 추천 테이블';
 
 -- 게시글 댓글
-CREATE TABLE board_comment (
+CREATE TABLE IF NOT EXISTS board_comment (
                                comment_id   INT AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 아이디',
                                brd_id       INT NOT NULL COMMENT '게시글 아이디',
                                user_id      VARCHAR(100) NOT NULL COMMENT '작성자 아이디',
@@ -161,7 +159,7 @@ CREATE TABLE board_comment (
 
 
 -- 11) 출석
-CREATE TABLE attendance (
+CREATE TABLE IF NOT EXISTS attendance (
                             attendance_id   INT AUTO_INCREMENT PRIMARY KEY NOT NULL COMMENT '출석 아이디',
                             user_id         VARCHAR(100) NOT NULL COMMENT '사용자 아이디',
                             attendance_date DATE NOT NULL COMMENT '출석 일자',
@@ -172,7 +170,7 @@ CREATE TABLE attendance (
 );
 
 -- 12) 쿠폰
-CREATE TABLE coupon (
+CREATE TABLE IF NOT EXISTS coupon (
                         coupon_id     INT AUTO_INCREMENT PRIMARY KEY COMMENT '쿠폰 아이디',
                         coupon_name   VARCHAR(200) NOT NULL COMMENT '쿠폰 이름',
                         description   TEXT NOT NULL COMMENT '쿠폰 설명',
@@ -182,7 +180,7 @@ CREATE TABLE coupon (
 );
 
 -- 13) 쿠폰 파일 (update_date 컬럼 포함, ON DELETE CASCADE)
-CREATE TABLE coupon_file (
+CREATE TABLE IF NOT EXISTS coupon_file (
                              cf_id        INT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '쿠폰 파일 아이디',
                              coupon_id    INT NOT NULL COMMENT '쿠폰 아이디',
                              file_name    VARCHAR(255) NOT NULL COMMENT '원본 파일명',
@@ -196,7 +194,7 @@ CREATE TABLE coupon_file (
 );
 
 -- 14) 사용자-쿠폰
-CREATE TABLE user_coupon (
+CREATE TABLE IF NOT EXISTS user_coupon (
                              user_coupon_id INT AUTO_INCREMENT PRIMARY KEY COMMENT '사용자 보유 쿠폰 ID',
                              user_id        VARCHAR(100) NOT NULL COMMENT '사용자 ID',
                              coupon_id      INT NOT NULL COMMENT '쿠폰 아이디',
@@ -208,7 +206,7 @@ CREATE TABLE user_coupon (
 );
 
 -- 15) 배너
-CREATE TABLE banner (
+CREATE TABLE IF NOT EXISTS banner (
                         banner_id    VARCHAR(36) NOT null  PRIMARY KEY COMMENT '배너 아이디',
                         title        VARCHAR(200) NOT NULL COMMENT '배너 제목',
                         link_url     VARCHAR(500) NOT NULL COMMENT '클릭시 이동할 url',

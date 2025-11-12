@@ -168,11 +168,13 @@ public class AdminUserAPIController {
             couponService.updateCoupon(couponId, update);
             resultMap.put("resultCode", 200);
             resultMap.put("resultMessage", "OK");
+            return ResponseEntity.ok(ApiResponse.ok(resultMap));
         }catch (Exception e){
             resultMap.put("resultCode", 500);
             resultMap.put("resultMessage", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail(resultMap));
         }
-        return ResponseEntity.ok(ApiResponse.ok(resultMap));
+        
     }
 
     //쿠폰 삭제
