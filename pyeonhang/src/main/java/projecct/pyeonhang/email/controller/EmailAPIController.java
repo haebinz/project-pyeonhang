@@ -18,7 +18,7 @@
             this.emailService = emailService;
         }
 
-        // 테스트용: 이메일로 인증코드 직접 발송 (실무에서는 PasswordResetService 사용 권장)
+        // 이메일로 인증코드 보내기
         @GetMapping("/email/auth/{email}")
         public ResponseEntity<String> requestAuthcode(@PathVariable String email) {
             // 1) 코드 생성

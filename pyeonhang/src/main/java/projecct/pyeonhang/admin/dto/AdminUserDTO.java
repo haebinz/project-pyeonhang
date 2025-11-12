@@ -21,7 +21,6 @@ public class AdminUserDTO {
     private String birth;
     private String email;
     private String phone;
-    private String useYn;
     private String delYn;
     private String userRole;
     private String roleName;
@@ -42,7 +41,6 @@ public class AdminUserDTO {
                 .email(entity.getEmail())
                 .phone(entity.getPhone())
                 .pointBalance(entity.getPointBalance())
-                .useYn(entity.getUseYn())
                 .delYn(entity.getDelYn())
                 .createDate(entity.getCreateDate())
                 .updateDate(entity.getUpdateDate())
@@ -62,7 +60,6 @@ public class AdminUserDTO {
                 .phone(entity.getPhone())
                 .email(entity.getEmail())
                 .pointBalance(entity.getPointBalance())
-                .useYn(entity.getUseYn())
                 .delYn(entity.getDelYn())
                 .createDate(entity.getCreateDate())
                 .updateDate(entity.getUpdateDate())
@@ -83,7 +80,6 @@ public class AdminUserDTO {
         entity.setEmail(dto.getEmail());
         entity.setNickname(dto.getNickname());
         entity.setPointBalance(dto.getPointBalance());
-        entity.setUseYn(dto.getUseYn());
         entity.setDelYn(dto.getDelYn() == null ?  "N" : dto.getDelYn());
 
         return entity;

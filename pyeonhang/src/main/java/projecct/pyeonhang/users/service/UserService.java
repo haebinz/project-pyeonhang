@@ -90,6 +90,9 @@ public class UserService {
         if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
             throw new IllegalArgumentException("새 비밀번호와 확인이 일치하지 않습니다.");
         }
+        if (passwordEncoder.matches(request.getConfirmNewPassword(), user.getPasswd())) {
+            throw new IllegalArgumentException("새 비밀번호는 이전 비밀번호와 같을 수 없습니다. 다른 비밀번호를 사용하세요.");
+        }
 
         user.setPasswd(passwordEncoder.encode(request.getNewPassword()));
     }
@@ -134,6 +137,10 @@ public class UserService {
         }
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        if (passwordEncoder.matches(newPassword, user.getPasswd())) {
+            throw new IllegalArgumentException("새 비밀번호는 이전 비밀번호와 같을 수 없습니다. 다른 비밀번호를 사용하세요.");
+        }
 
         user.setPasswd(passwordEncoder.encode(newPassword));
         usersRepository.save(user);

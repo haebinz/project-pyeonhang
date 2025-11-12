@@ -26,16 +26,23 @@ import java.util.Map;
 public class AdminUserService  {
 
     private final UsersRepository usersRepository;
-    private final UserRoleRepository userRoleRepository;
-    private final PasswordEncoder bCryptPasswordEncoder;
     private final PointsRepository pointsRepository;
 
+    //사용자 리스트 가져오기 + 검색 기능
     @Transactional
     public Map<String,Object> getUserList(Pageable pageable, AdminUserSearchDTO searchDTO) throws Exception{
         Map<String,Object> resultMap = new HashMap<>();
 
+        String role = (searchDTO != null && searchDTO.getRoleFilter() != null && !searchDTO.getRoleFilter().isBlank())
+                ? searchDTO.getRoleFilter().trim()
+                : null;
+
+        String search = (searchDTO != null && searchDTO.getSearchText() != null && !searchDTO.getSearchText().isBlank())
+                ? searchDTO.getSearchText().trim()
+                : null;
+
         Page<UsersEntity> pageList =
-                usersRepository.findAll(pageable);
+                usersRepository.findAllByRoleAndSearch(role, search, pageable);
 
         List<AdminUserDTO> list = pageList.getContent()
                 .stream().map(AdminUserDTO::of).toList();
@@ -50,7 +57,24 @@ public class AdminUserService  {
 
         return resultMap;
     }
+    //관리자 페이지->사용자 delYn수정
+    public Map<String,Object> changeUserDelYn(String userId){
+        Map<String,Object> resultMap = new HashMap<>();
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
+        try{
+            user.setDelYn("Y");
+            usersRepository.save(user);
+            resultMap.put("success",true);
+            resultMap.put("변경된 상태",user.getDelYn());
+        }catch (Exception e){
+            resultMap.put("변경실패",false);
 
+        }
+        return resultMap;
+    }
+
+    //특정 사용자 정보 가져오기
     @Transactional
     public AdminUserDTO getUser(String userId) throws Exception{
         AdminUserProjection user = usersRepository.getUserById(userId)
@@ -58,7 +82,7 @@ public class AdminUserService  {
 
         return AdminUserDTO.of(user);
     }
-
+    //유저한테 포인트 주기
     @Transactional
     public Map<String, Object> grantPoints(String userId, int amount, String reason) {
         UsersEntity user = usersRepository.findById(userId)
@@ -91,23 +115,6 @@ public class AdminUserService  {
         return resultMap;
     }
 
-    @Transactional
-    public Map<String, Object> updateUserUseYn(String userId, String useYn) {
-        UsersEntity user = usersRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
-
-        String activate = "Y".equalsIgnoreCase(useYn) ? "Y" : "N";
-        String status = user.getUseYn();
-        user.setUseYn(activate);
-        usersRepository.save(user);
-
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("userId", userId);
-        resultMap.put("이전 상태", status);
-        resultMap.put("useYn사용", activate);
-        resultMap.put("active", "Y".equals(activate));
-        return resultMap;
-    }
 
 
 
