@@ -143,7 +143,7 @@ public class AdminUserAPIController {
         } catch (Exception e) {
             log.error("배너 등록 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("배너 등록 실패"));
+                    .body(ApiResponse.fail("배너 등록 실패:"+ e.getMessage()));
         }
     }
 
@@ -162,7 +162,7 @@ public class AdminUserAPIController {
         } catch (Exception e) {
             log.error("배너 삭제 실패 bannerId={}: {}", bannerId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("배너 삭제 실패"));
+                    .body(ApiResponse.fail("배너 삭제 실패 bannerId=" + bannerId));
         }
     }
 

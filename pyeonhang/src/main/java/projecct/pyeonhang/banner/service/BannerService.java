@@ -71,6 +71,8 @@ public class BannerService {
             // 파일 매핑
             MultipartFile file = getFile(files, request.getFileIndex());
 
+            log.info("요청 배너 아이디 :" + request.getBannerId());
+
             if (file != null && !file.isEmpty()) {
                 String bannerId = request.getBannerId() != null ? 
                     request.getBannerId() : UUID.randomUUID().toString();
@@ -83,9 +85,11 @@ public class BannerService {
                 // uploadFutures 객체에 supplyAsync 작업 진행 중인 객체 저장
                 uploadFutures.put(idx, CompletableFuture.supplyAsync(() -> {
                     try {
+                        // 이미지 변경일 때
                         if (request.getBannerId() != null) {
-                            cloudinaryService.deleteFile("banner/" + currentBannerId);
+                            return cloudinaryService.updateFile(file, "banner", currentBannerId);
                         }
+                        request.setBannerId(currentBannerId);
                         return cloudinaryService.uploadFile(currentFile, "banner", currentBannerId);
                     } catch (Exception e) {
                         throw new RuntimeException("업로드 실패: " + e.getMessage());
@@ -102,16 +106,22 @@ public class BannerService {
         // 3. DB 저장
         for (int index = 0; index < requestList.size(); index++) {
             BannerRequestDTO request = requestList.get(index);
+            Optional<BannerEntity> bannerOpt = bannerRepository.findById(request.getBannerId());
+
             BannerEntity banner;
-            
-            if (request.getBannerId() != null) {
-                banner = bannerRepository.findById(request.getBannerId())
-                        .orElseThrow(() -> new RuntimeException("배너를 찾을 수 없습니다."));
+
+            // 배너 엔터티가 있으면 배너 변수에 담기
+            if(bannerOpt.isPresent()) {
+                banner = bannerOpt.get();
             } else {
+                // 배너 엔터티가 없으면 새 배너 엔터티 만들기
                 banner = new BannerEntity();
-                banner.setBannerId(UUID.randomUUID().toString());
+                banner.setBannerId(request.getBannerId());
                 banner.setUseYn("Y");
+                // ID는 DB에서 자동 생성되도록 놔두는 게 안전
             }
+
+
             
             // 필드 업데이트
             updateBannerFields(banner, request, index);
@@ -129,11 +139,16 @@ public class BannerService {
 
     @Transactional
     public void deleteBanner(String bannerId) throws Exception {
-        BannerEntity banner = bannerRepository.findById(bannerId)
+        bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 bannerId입니다."));
 
-        bannerRepository.deleteById(bannerId);
-        cloudinaryService.deleteFile("banner/" + banner.getBannerId());
+        boolean isDelete = cloudinaryService.deleteFile("banner/" + bannerId);
+        // cloudinary에서 파일이 삭제됐을 경우
+        if(isDelete) {
+            bannerRepository.deleteById(bannerId);
+        } else {
+            throw new Exception("cloudinary 업로드 파일 삭제 실패");
+        }
     }
 
     private MultipartFile getFile(List<MultipartFile> files, Integer fileIndex) {
