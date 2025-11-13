@@ -17,8 +17,6 @@ public class UserCouponDTO  {
     private String couponName;
     private String description;
     private Integer requiredPoint;
-    private String fileName;
-    private String storedName;
-    private String filePath;
+    private String imgUrl;
     private LocalDateTime acquiredAt;
 }
