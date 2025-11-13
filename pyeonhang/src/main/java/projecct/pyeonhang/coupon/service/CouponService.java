@@ -1,20 +1,26 @@
 package projecct.pyeonhang.coupon.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.cloudinary.Cloudinary;
+
 import projecct.pyeonhang.common.dto.PageVO;
+import projecct.pyeonhang.common.service.CloudinaryService;
 import projecct.pyeonhang.common.utils.FileUtils;
 import projecct.pyeonhang.coupon.dto.CouponDTO;
 import projecct.pyeonhang.coupon.dto.CouponRequestDTO;
 import projecct.pyeonhang.coupon.dto.CouponUpdateDTO;
 import projecct.pyeonhang.coupon.entity.CouponEntity;
-import projecct.pyeonhang.coupon.entity.CouponFileEntity;
-import projecct.pyeonhang.coupon.repository.CouponFileRepository;
 import projecct.pyeonhang.coupon.repository.CouponRepository;
 import projecct.pyeonhang.point.entity.PointsEntity;
 import projecct.pyeonhang.point.repository.PointsRepository;
@@ -30,56 +36,40 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CouponService {
-    private final FileUtils fileUtils;
     private final CouponRepository couponRepository;
-    private final CouponFileRepository couponFileRepository;
     private final UsersRepository usersRepository;
     private final PointsRepository pointsRepository;
     private final UserCouponRepository userCouponRepository;
+    private final CloudinaryService cloudinaryService;
 
     //파일 업로드 지정
     @Value("${server.file.coupon.path}")
     private String filePath;
 
-    private List<String> extentions =
-            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp", "svg");
-
     @Transactional
     public void registerCoupon(CouponRequestDTO request) throws Exception {
-        // 파일 필수
-        MultipartFile file = request.getFile();
+        // // 파일 필수
+         MultipartFile file = request.getFile();
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("파일은 필수입니다.");
         }
-        // 확장자 체크
-        String fileName = file.getOriginalFilename();
-        String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
-        if (!extentions.contains(ext)) {
-            throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
-        }
 
 
+        // // 업로드
+        String cloudinaryId = UUID.randomUUID().toString();
+        String imgUrl = cloudinaryService.uploadFile(file, "coupon", cloudinaryId);
 
-        // 업로드
-        Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
-        if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
 
         //쿠폰 저장
         CouponEntity couponEntity = new CouponEntity();
         couponEntity.setCouponName(request.getCouponName());
         couponEntity.setDescription(request.getDescription());
         couponEntity.setRequiredPoint(request.getRequiredPoint());
+        couponEntity.setCloudinaryId(cloudinaryId);
+        couponEntity.setImgUrl(imgUrl);
         couponRepository.save(couponEntity);
-
-        //파일 저장
-        CouponFileEntity couponFileEntity = new CouponFileEntity();
-        couponFileEntity.setCoupon(couponEntity);
-        couponFileEntity.setFileName(fileMap.get("fileName").toString());
-        couponFileEntity.setStoredName(fileMap.get("storedFileName").toString());
-        couponFileEntity.setFilePath(filePath);
-        couponFileEntity.setFileSize(getFileSize(filePath + couponFileEntity.getStoredName()));
-        couponFileRepository.save(couponFileEntity);
     }
 
     private long getFileSize(String absolutePath) {
@@ -92,7 +82,6 @@ public class CouponService {
     public Map<String,Object> updateCoupon(int couponId, CouponUpdateDTO update) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
 
-        try {
             CouponEntity coupon = couponRepository.findById(couponId)
                     .orElseThrow(() -> new RuntimeException("쿠폰을 찾을 수 없습니다"));
 
@@ -107,68 +96,46 @@ public class CouponService {
             }
 
             MultipartFile file = update.getFile();
-            if (file != null && !file.isEmpty()) {
-                String fileName = file.getOriginalFilename();
-                String ext = fileName.substring(fileName.lastIndexOf(".") + 1)
-                        .toLowerCase(Locale.ROOT);
-                if (!extentions.contains(ext)) {
-                    throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능");
-                }
 
-                Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
-                if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
+            String updateUrl = cloudinaryService.updateFile(file, "coupon", update.getCloudinaryId());
+            coupon.setImgUrl(updateUrl);
 
-                CouponFileEntity fileEntity = coupon.getFile();
-                if (fileEntity == null) {
-                    fileEntity = new CouponFileEntity();
-                    fileEntity.setCoupon(coupon);
-                    coupon.setFile(fileEntity);
-                }
-
-                fileEntity.setFileName(fileMap.get("fileName").toString());
-                fileEntity.setStoredName(fileMap.get("storedFileName").toString());
-                fileEntity.setFilePath(fileMap.get("filePath").toString());
-                fileEntity.setFileSize(getFileSize(filePath + fileEntity.getStoredName()));
-                couponFileRepository.save(fileEntity);
-
-                resultMap.put("fileName", fileEntity.getFileName());
-                resultMap.put("storedName", fileEntity.getStoredName());
-                resultMap.put("filePath", fileEntity.getFilePath());
-                resultMap.put("fileSize", fileEntity.getFileSize());
-            }
-
-            resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
             resultMap.put("couponId", coupon.getCouponId());
             resultMap.put("description", coupon.getDescription());
             resultMap.put("requiredPoint", coupon.getRequiredPoint());
-        } catch (Exception e) {
-            resultMap.put("resultCode", 500);
-            resultMap.put("resultMessage", e.getMessage());
-            e.printStackTrace();
-        }
+            
+            couponRepository.save(coupon);
         return resultMap;
     }
 
 
     //쿠폰 삭제
     @Transactional
-    public Map<String,Object> deleteCoupon(int couponId) throws Exception {
-        Map<String,Object> resultMap = new HashMap<>();
-        try{
-            couponRepository.findById(couponId);
-            if(!couponRepository.findById(couponId).isPresent()){
-                resultMap.put("resultCode", 500);
-                resultMap.put("message","존재하지 않는 쿠폰 id입니다");
+    public Map<String,Object> deleteCoupon(List<String> idList) throws Exception {
+        List<String> failedIds = new ArrayList<>();
+        Map<String, Object> resultMap = new HashMap<>();
+
+        for (String id : idList) {
+            try {
+                int newId = Integer.valueOf(id);
+                CouponEntity coupon = couponRepository.findById(newId).orElseThrow(() -> new Exception("쿠폰 없음"));
+                couponRepository.deleteById(newId);
+                // Cloudinary 삭제
+                cloudinaryService.deleteFile("coupon/" + coupon.getCloudinaryId());
+                
+            } catch (Exception e) {
+                failedIds.add(id); // 삭제 실패한 id 기록
             }
-            couponRepository.deleteById(couponId);
-            resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
-        }catch (Exception e){
-            resultMap.put("resultCode", 500);
-            resultMap.put("resultMessage", e.getMessage());
         }
-        return resultMap;
+
+        if (failedIds.isEmpty()) {
+            resultMap.put("resultMessage", "모든 쿠폰 삭제 완료");
+            return resultMap;
+        } else {
+            resultMap.put("failedIds", failedIds);
+            resultMap.put("resultMessage", "일부 쿠폰 삭제 실패");
+            return resultMap;
+        }
     }
 
     //쿠폰리스트 전체 가져오기(관리자)
@@ -180,7 +147,7 @@ public class CouponService {
 
         // 엔티티 -> DTO 변환 (파일 포함)
         List<CouponDTO> items = page
-                .map(CouponEntity -> CouponDTO.of(CouponEntity, CouponEntity.getFile()))
+                .map(CouponEntity -> CouponDTO.of(CouponEntity))
                 .getContent();
 
         resultMap.put("total", page.getTotalElements());
@@ -245,20 +212,17 @@ public class CouponService {
     public Map<String, Object> listMyCoupons(String userId) {
         Map<String, Object> result = new HashMap<>();
 
-        List<UserCouponEntity> list = userCouponRepository.findAllByUserIdWithCouponAndFile(userId);
+        List<UserCouponEntity> list = userCouponRepository.findAllByUserIdWithCoupon(userId);
 
         List<UserCouponDTO> items = list.stream().map(uc -> {
             var c = uc.getCoupon();
-            var f = c.getFile();
             return UserCouponDTO.builder()
                     .userCouponId(uc.getUserCouponId())
                     .couponId(c.getCouponId())
                     .couponName(c.getCouponName())
                     .description(c.getDescription())
                     .requiredPoint(c.getRequiredPoint())
-                    .fileName(f != null ? f.getFileName() : null)
-                    .storedName(f != null ? f.getStoredName() : null)
-                    .filePath(f != null ? f.getFilePath() : null)
+                    .imgUrl(c.getImgUrl())
                     .acquiredAt(uc.getAcquiredAt())
                     .build();
         }).toList();

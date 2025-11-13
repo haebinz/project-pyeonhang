@@ -22,8 +22,8 @@ public class CouponEntity extends BaseTimeEntity {
 
     private int requiredPoint;
 
-    @OneToOne(mappedBy = "coupon", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CouponFileEntity file;
+    private String cloudinaryId;
 
+    private String imgUrl;
 
 }

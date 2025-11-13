@@ -15,6 +15,9 @@ public class CouponUpdateDTO {
 
     private String description;
 
+    private String cloudinaryId;
+
+    private String imgUrl;
 
     private Integer requiredPoint;
 

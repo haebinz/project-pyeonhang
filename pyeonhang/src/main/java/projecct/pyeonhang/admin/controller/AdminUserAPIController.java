@@ -3,6 +3,7 @@ package projecct.pyeonhang.admin.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -210,6 +211,7 @@ public class AdminUserAPIController {
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("resultCode", 200);
             resultMap.put("resultMessage", "OK");
+            log.info("쿠폰 수정 성공~~");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
             log.error("쿠폰 수정 실패 couponId={}: {}", couponId, e.getMessage(), e);
@@ -219,18 +221,19 @@ public class AdminUserAPIController {
     }
 
     // 쿠폰 삭제
-    @DeleteMapping("/admin/coupon/{couponId}")
+    @DeleteMapping("/admin/coupon")
     public ResponseEntity<ApiResponse<Object>> deleteCoupon(
-            @PathVariable("couponId") int couponId
+            @RequestBody Map<String, List<String>> couponIds
     ) {
         try {
-            couponService.deleteCoupon(couponId);
-            Map<String, Object> resultMap = new HashMap<>();
+            List<String> idList = couponIds.get("ids");
+            Map<String, Object> resultMap = couponService.deleteCoupon(idList);
+
             resultMap.put("resultCode", 200);
             resultMap.put("resultMessage", "OK");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
-            log.error("쿠폰 삭제 실패 couponId={}: {}", couponId, e.getMessage(), e);
+            log.error("쿠폰 삭제 실패 couponId={}: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail("쿠폰 삭제 실패"));
         }

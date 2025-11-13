@@ -2,25 +2,36 @@ package projecct.pyeonhang.board.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import projecct.pyeonhang.board.entity.Board;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import projecct.pyeonhang.board.entity.BoardEntity;
 
-import java.util.List;
+@Repository
+public interface BoardRepository extends JpaRepository<BoardEntity,Integer> {
 
-public interface BoardRepository extends JpaRepository<Board, Integer> {
-
-    // 삭제 안된 게시글 전체
-    Page<Board> findByDelYn(String delYn, Pageable pageable);
-
-    List<Board> findByDelYn(String delYn, Sort sort);
-
-    // 제목으로 검색
-    Page<Board> findByTitleContainingIgnoreCaseAndDelYn(
-            String keyword,
-            String delYn,
+    @Query("""
+        select b
+          from BoardEntity b
+         where (
+                :keyword is null
+             or (
+                    :searchType = 'TITLE'
+                and lower(b.title) like lower(concat('%', :keyword, '%'))
+                )
+             or (
+                    :searchType = 'TITLE_CONTENTS'
+                and (
+                        lower(b.title)    like lower(concat('%', :keyword, '%'))
+                     or lower(b.contents) like lower(concat('%', :keyword, '%'))
+                )
+             )
+        )
+    """)
+    Page<BoardEntity> filterAll(
+            @Param("searchType") String searchType,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
-
-
 }
