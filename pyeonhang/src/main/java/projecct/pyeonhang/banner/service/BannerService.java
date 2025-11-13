@@ -21,8 +21,6 @@ public class BannerService {
     private final BannerRepository bannerRepository;
     private final CloudinaryService cloudinaryService;
 
-    private List<String> extentions =
-            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp", "svg");
 
     // 모든 배너 출력
     @Transactional(readOnly = true)
@@ -65,11 +63,14 @@ public class BannerService {
 
 
         // 1. 병렬 업로드 (파일이 있는 것만)
+        // CompletableFuture 비동기 작업을 하기 위한 클래스
         Map<Integer, CompletableFuture<String>> uploadFutures = new HashMap<>();
         
         for (int index = 0; index < requestList.size(); index++) {
             BannerRequestDTO request = requestList.get(index);
+            // 파일 매핑
             MultipartFile file = getFile(files, request.getFileIndex());
+
             if (file != null && !file.isEmpty()) {
                 String bannerId = request.getBannerId() != null ? 
                     request.getBannerId() : UUID.randomUUID().toString();
@@ -78,9 +79,10 @@ public class BannerService {
                 final MultipartFile currentFile = file;
                 final String currentBannerId = bannerId;
                 
+                // CompletableFuture.supplyAsync 결과값을 반환하는 비동기 작업 실행
+                // uploadFutures 객체에 supplyAsync 작업 진행 중인 객체 저장
                 uploadFutures.put(idx, CompletableFuture.supplyAsync(() -> {
                     try {
-                        validateFile(currentFile);
                         if (request.getBannerId() != null) {
                             cloudinaryService.deleteFile("banner/" + currentBannerId);
                         }
@@ -93,6 +95,8 @@ public class BannerService {
         }
         
         // 2. 업로드 완료 대기
+        // CompletableFuture.allOf(CompletableFuture.supplyAsync, CompletableFuture.supplyAsync...) 
+        // 인자로 받은 비동기 작업이 모두 끝나면 실행
         CompletableFuture.allOf(uploadFutures.values().toArray(new CompletableFuture[0])).join();
         
         // 3. DB 저장
@@ -132,10 +136,6 @@ public class BannerService {
         cloudinaryService.deleteFile("banner/" + banner.getBannerId());
     }
 
-
-
-
-
     private MultipartFile getFile(List<MultipartFile> files, Integer fileIndex) {
         if (files == null || fileIndex == null || fileIndex < 0 || fileIndex >= files.size()) {
             return null;
@@ -143,26 +143,10 @@ public class BannerService {
         return files.get(fileIndex);
     }
 
-    private void validateFile(MultipartFile file) throws Exception {
-        Map<String, String> fileCheck = fileCheck(file);
-        if (!extentions.contains(fileCheck.get("ext"))) {
-            throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
-        }
-    }
-
     private void updateBannerFields(BannerEntity banner, BannerRequestDTO request, int index) {
         if (request.getTitle() != null) banner.setTitle(request.getTitle());
         if (request.getLinkUrl() != null) banner.setLinkUrl(request.getLinkUrl());
         if (request.getUseYn() != null) banner.setUseYn(request.getUseYn());
         banner.setBannerOrder(index);
-    }
-
-    private Map<String, String> fileCheck(MultipartFile file) throws Exception {
-        Map<String, String> result = new HashMap<>();
-        String fileName = file.getOriginalFilename();
-        String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
-        result.put("fileName", fileName);
-        result.put("ext", ext);
-        return result;
     }
 }

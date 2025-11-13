@@ -11,8 +11,7 @@ public interface UserCouponRepository extends JpaRepository<UserCouponEntity,Int
 
     @Query("select uc from UserCouponEntity uc " +
             "join fetch uc.coupon c " +
-            "left join fetch c.file f " +
             "where uc.user.userId = :userId " +
             "order by uc.acquiredAt desc")
-    List<UserCouponEntity> findAllByUserIdWithCouponAndFile(String userId);
+    List<UserCouponEntity> findAllByUserIdWithCoupon(String userId);
 }

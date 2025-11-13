@@ -3,7 +3,6 @@ package projecct.pyeonhang.coupon.dto;
 
 import lombok.*;
 import projecct.pyeonhang.coupon.entity.CouponEntity;
-import projecct.pyeonhang.coupon.entity.CouponFileEntity;
 
 import java.time.LocalDateTime;
 
@@ -18,12 +17,11 @@ public class CouponDTO {
     private String couponName;
     private String description;
     private Integer requiredPoint;
-    private String fileName;
-    private String storedName;
-    private String filePath;
+    private String imgUrl;
+    private String cloudinaryId;
     private LocalDateTime lastModifiedDate;
 
-    public static CouponDTO of(CouponEntity entity, CouponFileEntity file){
+    public static CouponDTO of(CouponEntity entity){
         LocalDateTime last =
                 entity.getUpdateDate() == null ? entity.getCreateDate() : entity.getUpdateDate();
         return CouponDTO.builder()
@@ -31,9 +29,8 @@ public class CouponDTO {
                 .couponName(entity.getCouponName())
                 .description(entity.getDescription())
                 .requiredPoint(entity.getRequiredPoint())
-                .fileName(file != null ? file.getFileName() : null)
-                .storedName(file != null ? file.getStoredName() : null)
-                .filePath(file != null ? file.getFilePath() : null)
+                .imgUrl(entity.getImgUrl())
+                .cloudinaryId(entity.getCloudinaryId())
                 .lastModifiedDate(last)
                 .build();
     }

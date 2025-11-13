@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import projecct.pyeonhang.board.dto.BoardDto;
+import projecct.pyeonhang.board.dto.BoardRequestDTO;
 import projecct.pyeonhang.board.entity.Board;
 import projecct.pyeonhang.board.entity.BoardFile;
 import projecct.pyeonhang.board.entity.BoardLike;
@@ -155,27 +157,20 @@ public class BoardService {
      * @param file     첨부파일(이미지) - 없으면 null
      */
     @Transactional
-    public Integer create(String title, String contents, String userId, MultipartFile file) throws Exception {
+    public void create(BoardRequestDTO request, String userId) throws Exception {
         UsersEntity writer = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        Board b = new Board();
-        b.setTitle(title);
-        b.setContents(contents);
-        b.setWriter(writer);
-        b.setDelYn("N");
-        if (b.getLikeCount() == null) {
-            b.setLikeCount(0);
+        Board board = new Board();
+        board.setTitle(request.getTitle());
+        board.setContents(request.getContents());
+        board.setWriter(writer);
+        board.setDelYn("N");
+        if (board.getLikeCount() == null) {
+            board.setLikeCount(0);
         }
 
-        Board saved = boardRepository.save(b);
-
-        // 파일이 있으면 저장 (이미지 업로드 기능 사용)
-        if (file != null && !file.isEmpty()) {
-            saveBoardFile(saved, file);
-        }
-
-        return saved.getId();
+        boardRepository.save(board);
     }
 
     /**

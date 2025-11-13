@@ -2,14 +2,20 @@ package projecct.pyeonhang.board.controller;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.validation.Valid;
 import projecct.pyeonhang.board.dto.BoardCommentDto;
 import projecct.pyeonhang.board.dto.BoardDto;
+import projecct.pyeonhang.board.dto.BoardRequestDTO;
 import projecct.pyeonhang.board.service.BoardCommentService;
 import projecct.pyeonhang.board.service.BoardService;
 import projecct.pyeonhang.common.dto.ApiResponse;
@@ -18,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/board")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/board")
 public class BoardController {
     private final BoardService boardService;
     private final BoardCommentService boardCommentService;
@@ -51,21 +57,19 @@ public class BoardController {
     // 게시글 등록 api/board
     // Authorization: Bearer token, Content-Type: application/json
     // { "title": "테스트 글", "contents": "내용입니다" }
-    @PostMapping(path = "/with-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<Object> createWithFile(
-            @RequestParam("title") String title,
-            @RequestParam("contents") String contents,
-            @RequestPart(value = "file", required = false) MultipartFile file,
+    @PostMapping("/upload")
+    public ResponseEntity<ApiResponse<Object>> createWithFile(
+            @Valid @ModelAttribute BoardRequestDTO request,
             @AuthenticationPrincipal UserDetails user) throws Exception {
 
-        System.out.println("▶ createWithFile 진입, title=" + title
-                + ", user=" + (user != null ? user.getUsername() : "null")
-                + ", file=" + (file != null ? file.getOriginalFilename() : "null"));
-
         if (user == null)
-            return ApiResponse.fail("로그인이 필요합니다.");
-        Integer id = boardService.create(title, contents, user.getUsername(), file);
-        return ApiResponse.ok(id);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.fail("로그인이 필요합니다."));
+            try {
+                boardService.create(request, user.getUsername());
+                return ResponseEntity.ok(ApiResponse.ok("OK"));
+            } catch(Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("게시글 등록 실패"));
+            }
     }
 
     // 게시글 수정 api/board/{{게시글 ID}}
@@ -174,11 +178,5 @@ public class BoardController {
 
         boardCommentService.delete(commentId, user.getUsername(), isAdmin);
         return ApiResponse.ok(null);
-    }
-
-    @Data
-    static class BoardReq {
-        private String title;
-        private String contents;
     }
 }
