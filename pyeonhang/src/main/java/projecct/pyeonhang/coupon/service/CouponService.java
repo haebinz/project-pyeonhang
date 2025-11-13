@@ -1,6 +1,7 @@
 package projecct.pyeonhang.coupon.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CouponService {
     private final FileUtils fileUtils;
     private final CouponRepository couponRepository;
@@ -86,69 +88,85 @@ public class CouponService {
         File f = new File(absolutePath);
         return f.exists() ? f.length() : 0L;
     }
-    
+
     //쿠폰 수정
     @Transactional
     public Map<String,Object> updateCoupon(int couponId, CouponUpdateDTO update) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
 
-        try {
-            CouponEntity coupon = couponRepository.findById(couponId)
-                    .orElseThrow(() -> new RuntimeException("쿠폰을 찾을 수 없습니다"));
 
-            if (update.getCouponName() != null) {
-                coupon.setCouponName(update.getCouponName());
-            }
-            if (update.getDescription() != null) {
-                coupon.setDescription(update.getDescription());
-            }
-            if (update.getRequiredPoint() != null) {
-                coupon.setRequiredPoint(update.getRequiredPoint());
-            }
+        CouponEntity coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new RuntimeException("쿠폰을 찾을 수 없습니다"));
 
-            MultipartFile file = update.getFile();
-            if (file != null && !file.isEmpty()) {
-                String fileName = file.getOriginalFilename();
-                String ext = fileName.substring(fileName.lastIndexOf(".") + 1)
-                        .toLowerCase(Locale.ROOT);
-                if (!extentions.contains(ext)) {
-                    throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능");
-                }
 
-                Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
-                if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
-
-                CouponFileEntity fileEntity = coupon.getFile();
-                if (fileEntity == null) {
-                    fileEntity = new CouponFileEntity();
-                    fileEntity.setCoupon(coupon);
-                    coupon.setFile(fileEntity);
-                }
-
-                fileEntity.setFileName(fileMap.get("fileName").toString());
-                fileEntity.setStoredName(fileMap.get("storedFileName").toString());
-                fileEntity.setFilePath(fileMap.get("filePath").toString());
-                fileEntity.setFileSize(getFileSize(filePath + fileEntity.getStoredName()));
-                couponFileRepository.save(fileEntity);
-
-                resultMap.put("fileName", fileEntity.getFileName());
-                resultMap.put("storedName", fileEntity.getStoredName());
-                resultMap.put("filePath", fileEntity.getFilePath());
-                resultMap.put("fileSize", fileEntity.getFileSize());
-            }
-
-            resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
-            resultMap.put("couponId", coupon.getCouponId());
-            resultMap.put("description", coupon.getDescription());
-            resultMap.put("requiredPoint", coupon.getRequiredPoint());
-        } catch (Exception e) {
-            resultMap.put("resultCode", 500);
-            resultMap.put("resultMessage", e.getMessage());
-            e.printStackTrace();
+        if (update.getCouponName() != null) {
+            coupon.setCouponName(update.getCouponName());
         }
+        if (update.getDescription() != null) {
+            coupon.setDescription(update.getDescription());
+        }
+        if (update.getRequiredPoint() != null) {
+            coupon.setRequiredPoint(update.getRequiredPoint());
+        }
+
+
+        MultipartFile file = update.getFile();
+        if (file != null && !file.isEmpty()) {
+            String fileName = file.getOriginalFilename();
+            if (fileName == null || !fileName.contains(".")) {
+                throw new RuntimeException("파일 이름 또는 확장자가 없습니다.");
+            }
+
+            String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
+            if (!extentions.contains(ext)) {
+                throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능");
+            }
+
+
+            Map<String, Object> fileMap = fileUtils.uploadFiles(file, filePath);
+            if (fileMap == null) throw new RuntimeException("파일 업로드가 실패했습니다.");
+
+
+            CouponFileEntity fileEntity = coupon.getFile();
+            if (fileEntity == null) {
+                fileEntity = new CouponFileEntity();
+                fileEntity.setCoupon(coupon);
+                coupon.setFile(fileEntity);
+            }
+
+
+            String storedName = fileMap.get("storedFileName").toString();
+            String savedFileName = fileMap.get("fileName").toString();
+            String savedFilePath = fileMap.get("filePath").toString();
+
+            fileEntity.setFileName(savedFileName);
+            fileEntity.setStoredName(storedName);
+            fileEntity.setFilePath(savedFilePath);
+            fileEntity.setFileSize(getFileSize(savedFilePath + storedName));
+
+
+            couponFileRepository.save(fileEntity);
+
+
+            resultMap.put("fileName", fileEntity.getFileName());
+            resultMap.put("storedName", fileEntity.getStoredName());
+            resultMap.put("filePath", fileEntity.getFilePath());
+            resultMap.put("fileSize", fileEntity.getFileSize());
+        }
+
+        couponRepository.save(coupon);
+
+      
+        resultMap.put("resultCode", 200);
+        resultMap.put("resultMessage", "OK");
+        resultMap.put("couponId", coupon.getCouponId());
+        resultMap.put("couponName", coupon.getCouponName());
+        resultMap.put("description", coupon.getDescription());
+        resultMap.put("requiredPoint", coupon.getRequiredPoint());
+
         return resultMap;
     }
+
 
 
     //쿠폰 삭제
@@ -200,7 +218,7 @@ public class CouponService {
                 .orElseThrow(() -> new IllegalArgumentException("쿠폰이 없습니다 (id=" + couponId + ")"));
 
         int required = coupon.getRequiredPoint();
-        
+
 
         // 포인트 차감
         int updated = usersRepository.decrementPointBalanceIfEnough(userId, required);
