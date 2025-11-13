@@ -8,4 +8,5 @@ public class AdminUserSearchDTO {
     //검색할단어
     private String searchText;
     private String roleFilter;
+    private String delYn;
 }

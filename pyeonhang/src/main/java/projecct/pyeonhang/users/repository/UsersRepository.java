@@ -57,6 +57,7 @@ public interface UsersRepository extends JpaRepository<UsersEntity,String> {
         select u
         from UsersEntity u
         where (:role is null or :role = 'ALL' or u.role.roleId = :role)
+          and (:delYn is null or :delYn = 'ALL' or u.delYn = :delYn)
           and (
                 :search is null
                 or lower(u.userId) like concat('%', lower(:search), '%')
@@ -64,8 +65,9 @@ public interface UsersRepository extends JpaRepository<UsersEntity,String> {
                 or lower(u.nickname) like concat('%', lower(:search), '%')
               )
         """)
-    Page<UsersEntity> findAllByRoleAndSearch(
+    Page<UsersEntity> findAllByRoleAndSearchAndDelYn(
             @Param("role") String role,
+            @Param("delYn") String delYn,
             @Param("search") String search,
             Pageable pageable);
 

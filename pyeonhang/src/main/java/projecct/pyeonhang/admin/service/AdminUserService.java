@@ -37,12 +37,16 @@ public class AdminUserService  {
                 ? searchDTO.getRoleFilter().trim()
                 : null;
 
+        String delyn = (searchDTO != null && searchDTO.getDelYn() != null && !searchDTO.getDelYn().isBlank())
+                ? searchDTO.getDelYn().trim()
+                : null;
+
         String search = (searchDTO != null && searchDTO.getSearchText() != null && !searchDTO.getSearchText().isBlank())
                 ? searchDTO.getSearchText().trim()
                 : null;
 
         Page<UsersEntity> pageList =
-                usersRepository.findAllByRoleAndSearch(role, search, pageable);
+                usersRepository.findAllByRoleAndSearchAndDelYn(role, delyn, search, pageable);
 
         List<AdminUserDTO> list = pageList.getContent()
                 .stream().map(AdminUserDTO::of).toList();
