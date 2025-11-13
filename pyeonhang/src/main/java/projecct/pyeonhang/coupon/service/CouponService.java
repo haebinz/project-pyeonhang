@@ -156,6 +156,32 @@ public class CouponService {
         resultMap.put("content", items);
         return resultMap;
     }
+     //사용자 쿠폰 요청리스트
+    @Transactional(readOnly = true)
+    public Map<String, Object> adminCouponList(Pageable pageable) {
+        Map<String, Object> result = new HashMap<>();
+
+        List<UserCouponEntity> list = userCouponRepository.findAllWithCoupon();
+
+        List<UserCouponDTO> items = list.stream().map(uc -> {
+            var c = uc.getCoupon();
+            return UserCouponDTO.builder()
+                    .userCouponId(uc.getUserCouponId())
+                    .userId(uc.getUser().getUserId())
+                    .couponId(c.getCouponId())
+                    .couponName(c.getCouponName())
+                    .description(c.getDescription())
+                    .requiredPoint(c.getRequiredPoint())
+                    .imgUrl(c.getImgUrl())
+                    .acquiredAt(uc.getAcquiredAt())
+                    .build();
+        }).toList();
+
+        result.put("resultCode", 200);
+        result.put("count", items.size());
+        result.put("items", items);
+        return result;
+    }
 
     //쿠폰교환(사용자)
     @Transactional
@@ -232,5 +258,6 @@ public class CouponService {
         result.put("items", items);
         return result;
     }
+   
 
 }
