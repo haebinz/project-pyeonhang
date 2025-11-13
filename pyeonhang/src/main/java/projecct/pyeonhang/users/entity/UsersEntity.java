@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import projecct.pyeonhang.board.entity.Board;
+
 import projecct.pyeonhang.common.entity.BaseTimeEntity;
 
 import java.util.ArrayList;
@@ -39,8 +39,8 @@ public class UsersEntity extends BaseTimeEntity {
     @ColumnDefault("USER")
     private UserRoleEntity role;
 
-    @OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Board> boards = new ArrayList<>();
+    /*@OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Board> boards = new ArrayList<>();*/
 
 
     @PrePersist
