@@ -60,6 +60,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String userId = user.getUserId();
         String userName = user.getUserName();
         String userDelYn = user.getDelYn();
+        String nickname = user.getNickname();
 
         //권한 > 현재 한개니까 하나만 추출하자
         Iterator<? extends GrantedAuthority> iter =  authResult.getAuthorities().iterator();
@@ -67,9 +68,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         //토큰 생성
         String accessToken = jwtUtils.createJwt("access", userId, userName,
-                userRole, userDelYn, ACCESS_TOKEN_EXPIRE_TIME);
+                userRole, userDelYn,nickname, ACCESS_TOKEN_EXPIRE_TIME);
         String refreshToken = jwtUtils.createJwt("refresh", userId, userName,
-                userRole, userDelYn, REFRESH_TOKEN_EXPIRE_TIME);
+                userRole, userDelYn,nickname, REFRESH_TOKEN_EXPIRE_TIME);
 
         //응답을 설정
         response.setHeader("Authorization", accessToken);
@@ -96,6 +97,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             data.put("userName", userName);
             data.put("userRole", userRole);
             data.put("token", accessToken);
+            data.put("nickname", nickname);
 
             jObj.put("content", data);
 

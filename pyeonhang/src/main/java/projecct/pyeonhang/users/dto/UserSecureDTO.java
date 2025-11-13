@@ -16,14 +16,16 @@ public class UserSecureDTO extends User {
 
     private String userId;
     private String userName;
-    private String delYn;    
+    private String delYn;
+    private String nickname;     
 
-    public UserSecureDTO(String userId, String userName, String passwd, String userRole, String delYn) {
+    public UserSecureDTO(String userId, String userName, String passwd, String userRole, String delYn,String nickname) {
         super(userId, passwd, makeGrantedAuthorities(userRole));
 
         this.userId = userId;
         this.userName = userName;
-        this.delYn = delYn;        
+        this.delYn = delYn;
+        this.nickname = nickname;        
     }
 
     @Override

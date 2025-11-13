@@ -65,9 +65,10 @@ public class JWTFilter extends OncePerRequestFilter {
         String userName = jwtUtils.getUserName(acessToken);
         String userRole = jwtUtils.gertUserRole(acessToken);
         String delYn = jwtUtils.getDelYn(acessToken);
+        String nickname = jwtUtils.getNickname(acessToken);
 
 
-        UserSecureDTO dto = new UserSecureDTO(userId, userName, userName, userRole, delYn);
+        UserSecureDTO dto = new UserSecureDTO(userId, userName, userName, userRole, delYn, nickname);
 
         //시큐리티 세션에 저장()
         Authentication authentication =

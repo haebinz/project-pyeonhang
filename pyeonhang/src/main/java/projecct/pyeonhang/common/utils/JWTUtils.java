@@ -28,12 +28,13 @@ public class JWTUtils {
 
     //사용자 아이디, 권한, 이름, 탈퇴여부, 지속시간(분)
     public String createJwt(String category, String userId,
-                            String userName, String userRole, String userDelYn, Long mins) {
+                            String userName, String userRole,String nickname, String userDelYn, Long mins) {
 
         return Jwts.builder()
                 .claim("category", category)
                 .claim("userId", userId)
                 .claim("userName", userName)
+                .claim("userName", nickname)
                 .claim("userRole", userRole)
                 .claim("userDelYn", userDelYn)
                 .issuedAt(Timestamp.valueOf(LocalDateTime.now()))
@@ -93,6 +94,13 @@ public class JWTUtils {
         return Jwts.parser().verifyWith(secretKey)
                 .build().parseSignedClaims(token)
                 .getPayload().get("userRole", String.class);
+    }
+    //닉네임 추출
+    public String getNickname(String token) {
+
+        return Jwts.parser().verifyWith(secretKey)
+                .build().parseSignedClaims(token)
+                .getPayload().get("nickname", String.class);
     }
 
     // 삭제 여부 추출(로그인 시 탈퇴한 회원 막기 위해)
