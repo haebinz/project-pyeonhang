@@ -45,7 +45,6 @@ public class UserAPIController {
     //사용자 가입
     @PostMapping("/user/add")
     public ResponseEntity<ApiResponse<Object>> addUser(@Valid @ModelAttribute UserRequest request) {
-        Map<String, Object> resultMap = new HashMap<>();
         try {
             userService.addUser(request);
             // HTTP 200 OK 반환
@@ -61,7 +60,7 @@ public class UserAPIController {
             log.info("회원가입 실패: {}", e.getMessage(), e);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("회원가입 실패"));
+                    .body(ApiResponse.fail(e.getMessage()));
         }
     }
 
@@ -166,7 +165,7 @@ public class UserAPIController {
             session.setAttribute("PWD_RESET_USER", request.getUserId());
             session.setAttribute("PWD_RESET_EMAIL", request.getEmail());
 
-            return ResponseEntity.ok(ApiResponse.ok("인증 코드 전송됨"));
+            return ResponseEntity.ok(ApiResponse.ok("인증 코드가 전송되었습니다."));
         } catch (IllegalArgumentException e) {
             log.info("비밀번호 재설정 요청 실패(입력오류): {}", e.getMessage());
             return ResponseEntity

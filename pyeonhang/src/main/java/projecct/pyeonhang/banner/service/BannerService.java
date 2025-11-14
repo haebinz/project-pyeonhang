@@ -131,9 +131,7 @@ public class BannerService {
                 banner.setImgUrl(uploadFutures.get(index).join());
             }
             
-            if (request.getBannerId() == null) {
-                bannerRepository.save(banner);
-            }
+            bannerRepository.save(banner);
         }
     }
 

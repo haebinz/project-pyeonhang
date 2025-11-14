@@ -17,7 +17,7 @@ public class UserRequest {
     private String email;
     @NotBlank(message="휴대폰 번호를 입력해주세요")
     private String phone;
-    @NotBlank(message="닉네임을 입력해주세요")
+    
     private String nickname;
     @NotBlank(message="생년월일을 입력해주세요")
     private String birth;
