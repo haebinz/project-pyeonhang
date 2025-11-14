@@ -150,7 +150,7 @@ public class AdminUserAPIController {
         } catch (Exception e) {
             log.error("배너 등록 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("배너 등록 실패:"+ e.getMessage()));
+                    .body(ApiResponse.fail("배너 등록 실패"));
         }
     }
 
@@ -261,9 +261,6 @@ public class AdminUserAPIController {
         }
     }
 
-<<<<<<< HEAD
-    
-=======
     //게시글 전체 불러오기
     @GetMapping("/admin/board")
     public ResponseEntity<ApiResponse<Object>> getBoardList(
@@ -324,5 +321,4 @@ public class AdminUserAPIController {
                     .body(ApiResponse.fail("게시글 작성 실패"));
         }
     }
->>>>>>> branch1
 }
