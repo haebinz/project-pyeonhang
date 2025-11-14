@@ -102,7 +102,7 @@ public class BoardService {
     @Transactional
     public Map<String,Object> writeBoard(String userId,
                                          BoardWriteRequest writeRequest,
-                                         BoardCloudinaryRequestDTO cloudinaryRequest ) throws Exception {
+                                         BoardCloudinaryRequestDTO cloudinaryRequest) throws Exception {
 
 
         List<MultipartFile> files = cloudinaryRequest.getFiles();
