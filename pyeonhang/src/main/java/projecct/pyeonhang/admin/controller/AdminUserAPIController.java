@@ -145,7 +145,7 @@ public class AdminUserAPIController {
             bannerService.saveOrUpdateBanners(bannerList, files);
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
+            resultMap.put("resultMessage", "배너가 등록되었습니다.");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
             log.error("배너 등록 실패: {}", e.getMessage(), e);
@@ -164,7 +164,7 @@ public class AdminUserAPIController {
             bannerService.deleteBanner(bannerId);
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "배너가 성공적으로 삭제되었습니다.");
+            resultMap.put("resultMessage", "배너가 삭제되었습니다.");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
             log.error("배너 삭제 실패 bannerId={}: {}", bannerId, e.getMessage(), e);
@@ -213,7 +213,7 @@ public class AdminUserAPIController {
             couponService.registerCoupon(request);
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
+            resultMap.put("resultMessage", "쿠폰이 등록되었습니다.");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
             log.error("쿠폰 등록 실패: {}", e.getMessage(), e);
@@ -232,7 +232,7 @@ public class AdminUserAPIController {
             couponService.updateCoupon(couponId, update);
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
+            resultMap.put("resultMessage", "쿠폰이 수정되었습니다.");
             log.info("쿠폰 수정 성공~~");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
@@ -252,7 +252,7 @@ public class AdminUserAPIController {
             Map<String, Object> resultMap = couponService.deleteCoupon(idList);
 
             resultMap.put("resultCode", 200);
-            resultMap.put("resultMessage", "OK");
+            resultMap.put("resultMessage", "쿠폰이 삭제되었습니다.");
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (Exception e) {
             log.error("쿠폰 삭제 실패 couponId={}: {}", e.getMessage(), e);
