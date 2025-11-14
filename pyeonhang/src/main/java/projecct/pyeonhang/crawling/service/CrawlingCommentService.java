@@ -36,6 +36,7 @@ public class CrawlingCommentService {
                         .commentId(c.getCommentId())
                         .crawlId(c.getCrawling().getCrawlId())
                         .userId(c.getUser().getUserId())
+                        .nickname(c.getUser().getNickname())
                         .content(c.getContent())
                         .createDate(c.getCreateDate())
                         .updateDate(c.getUpdateDate())
