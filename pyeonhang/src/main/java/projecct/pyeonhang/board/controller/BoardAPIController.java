@@ -65,7 +65,7 @@ public class BoardAPIController {
         }
     }
 
-
+    //게시글 등록(로그인한 유저)
     @PostMapping("/board")
     public ResponseEntity<ApiResponse<Object>> writeBoard(
             @Valid @ModelAttribute BoardWriteRequest writeRequest,
@@ -91,7 +91,45 @@ public class BoardAPIController {
                     .body(ApiResponse.fail("게시글 작성 실패"));
         }
     }
+    //게시글 수정
+    @PutMapping("/board/{brdId}")
+    public ResponseEntity<ApiResponse<Object>> updateBoard(
+            @PathVariable int brdId,
+            @Valid @ModelAttribute BoardWriteRequest writeRequest,
+            @ModelAttribute BoardCloudinaryRequestDTO cloudinaryRequest,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
 
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
+        }
+
+        try {
+            Map<String, Object> resultMap =
+                    boardService.updateBoard(principalUserId, brdId, writeRequest, cloudinaryRequest);
+
+            int code = (int) resultMap.getOrDefault("resultCode", 500);
+
+            HttpStatus status = switch (code) {
+                case 200 -> HttpStatus.OK;
+                case 403 -> HttpStatus.FORBIDDEN;
+                default -> HttpStatus.INTERNAL_SERVER_ERROR;
+            };
+
+            return ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
+
+        } catch (Exception e) {
+            log.info("게시글 수정 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("게시글 수정 실패"));
+        }
+
+    }
+    
+    //게시글 상세
     @GetMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> getBoardDetail(@PathVariable int brdId) {
 
@@ -105,7 +143,8 @@ public class BoardAPIController {
                     .body(ApiResponse.fail(HttpStatus.NOT_FOUND.value(), "게시글을 찾을 수 없습니다."));
         }
     }
-
+    
+    //게시글 삭제(본인이 작성한 게시글 삭제)
     @DeleteMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> deleteBoard(@PathVariable Integer brdId,
                                                            @AuthenticationPrincipal(expression = "username") String principalUserId) {
@@ -133,9 +172,6 @@ public class BoardAPIController {
         }
     }
 
-
-
-
     //게시판 댓글 등록(로그인 필요)
     @PostMapping("/board/{brdId}/comment")
     public ResponseEntity<ApiResponse<Object>> writeComment(
@@ -150,7 +186,7 @@ public class BoardAPIController {
 
     }
 
-    //게시판 댓글 수정
+    //게시판 댓글 수정(본인꺼)
     @PutMapping("board/comment/{commentId}")
     public ResponseEntity<ApiResponse<Object>> updateComment(
             @PathVariable Integer commentId,
@@ -181,4 +217,37 @@ public class BoardAPIController {
         return  ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
 
+
+    //추천 누르기
+    @PostMapping("/board/{brdId}/like")
+    public ResponseEntity<ApiResponse<Object>> recommendBoard(
+            @PathVariable int brdId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
+        }
+
+        try {
+            Map<String, Object> resultMap = boardService.boardRecommend(principalUserId, brdId);
+            int code = (int) resultMap.getOrDefault("resultCode", 500);
+
+            HttpStatus status = switch (code) {
+                case 200 -> HttpStatus.OK;
+                case 409 -> HttpStatus.CONFLICT;
+                default -> HttpStatus.INTERNAL_SERVER_ERROR;
+            };
+
+            return ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
+
+        } catch (Exception e) {
+            log.info("게시글 추천 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("게시글 추천 실패"));
+        }
+    }
 }

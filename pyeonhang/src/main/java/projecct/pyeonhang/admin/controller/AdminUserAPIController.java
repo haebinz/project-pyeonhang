@@ -4,11 +4,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import projecct.pyeonhang.admin.dto.AdminUserDTO;
@@ -17,6 +19,9 @@ import projecct.pyeonhang.admin.service.AdminUserService;
 import projecct.pyeonhang.banner.dto.BannerRequestDTO;
 import projecct.pyeonhang.banner.dto.BannerResponseDTO;
 import projecct.pyeonhang.banner.service.BannerService;
+import projecct.pyeonhang.board.dto.BoardCloudinaryRequestDTO;
+import projecct.pyeonhang.board.dto.BoardWriteRequest;
+import projecct.pyeonhang.board.service.BoardService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.coupon.dto.CouponRequestDTO;
 import projecct.pyeonhang.coupon.dto.CouponUpdateDTO;
@@ -25,6 +30,7 @@ import projecct.pyeonhang.coupon.service.CouponService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -36,6 +42,7 @@ public class AdminUserAPIController {
     private final AdminUserService userService;
     private final BannerService bannerService;
     private final CouponService couponService;
+    private final BoardService boardService;
 
 
     //회원 리스트 가져오기
@@ -236,6 +243,67 @@ public class AdminUserAPIController {
             log.error("쿠폰 삭제 실패 couponId={}: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail("쿠폰 삭제 실패"));
+        }
+    }
+
+    //게시글 전체 불러오기
+    @GetMapping("/admin/board")
+    public ResponseEntity<ApiResponse<Object>> getBoardList(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sortField", defaultValue = "brdId") String sortField,  // 등록순
+            @RequestParam(name = "dir", defaultValue = "desc") String dir,               // 내림차순(최신순)
+            @RequestParam(name = "searchType", required = false) String searchType,
+            @RequestParam(name = "keyword", required = false) String keyword
+    ) {
+        // 정렬 가능한 필드 제한: 등록순(brdId), 추천순(likeCount)
+        Set<String> allowed = Set.of("brdId","likeCount");
+        if (!allowed.contains(sortField)) {
+            sortField = "brdId";
+        }
+
+        Sort.Direction direction = "desc".equalsIgnoreCase(dir)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+
+        try {
+            Map<String, Object> res = boardService.getBoardList(pageable, searchType, keyword);
+            return ResponseEntity.ok(ApiResponse.ok(res));
+        } catch (Exception e) {
+            log.info("게시글 리스트 가져오기 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("게시글 리스트 가져오기 실패"));
+        }
+    }
+
+    //관리자 게시글등록->공지?
+    //게시글 등록(로그인한 유저)
+    @PostMapping("/admin/board")
+    public ResponseEntity<ApiResponse<Object>> writeBoard(
+            @Valid @ModelAttribute BoardWriteRequest writeRequest,
+            @Valid @ModelAttribute BoardCloudinaryRequestDTO cloudinaryRequest,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
+        }
+
+        try {
+
+            Map<String, Object> resultMap = boardService.writeBoard(principalUserId,writeRequest,cloudinaryRequest);
+            return ResponseEntity.ok(ApiResponse.ok(resultMap));
+
+        } catch (Exception e) {
+            log.info("게시글 작성 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("게시글 작성 실패"));
         }
     }
 }

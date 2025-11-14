@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.admin.dto.AdminUserDTO;
 import projecct.pyeonhang.admin.dto.AdminUserProjection;
 import projecct.pyeonhang.admin.dto.AdminUserSearchDTO;
+import projecct.pyeonhang.board.repository.BoardRepository;
 import projecct.pyeonhang.common.dto.PageVO;
 import projecct.pyeonhang.point.entity.PointsEntity;
 import projecct.pyeonhang.point.repository.PointsRepository;
@@ -27,6 +28,7 @@ public class AdminUserService  {
 
     private final UsersRepository usersRepository;
     private final PointsRepository pointsRepository;
+    private final BoardRepository boardRepository;
 
     //사용자 리스트 가져오기 + 검색 기능
     @Transactional
