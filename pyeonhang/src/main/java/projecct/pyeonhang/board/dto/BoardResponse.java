@@ -17,6 +17,6 @@ public class BoardResponse {
     private String contents;
     private int likeCount;
     private String bestYn;
-    private String userId;       // user.getUserId()
+    private String userId;
     private LocalDateTime createDate;
 }
