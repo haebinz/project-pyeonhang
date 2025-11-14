@@ -16,15 +16,15 @@ import java.util.Optional;
 public interface UsersRepository extends JpaRepository<UsersEntity,String> {
 
     // 아이디 중복 확인
-    boolean existsByUserId(String userId);
+    boolean existsByUserId(@Param("userId")String userId);
     
     @Query("select u.userId " +
             "from UsersEntity u " +
             "where" +
             " lower(u.userName)=lower(:userName) and lower(u.email)=lower(:email)")
-    Optional<String> findUserIdByUserNameAndEmail(String userName, String email);
+    Optional<String> findUserIdByUserNameAndEmail(@Param("userName")String userName, @Param("email")String email);
 
-    Optional<UsersEntity> findByUserIdAndEmail(String userId, String email);
+    Optional<UsersEntity> findByUserIdAndEmail(@Param("userId")String userId, @Param("email")String email);
 
     @Query(value = """
     select 

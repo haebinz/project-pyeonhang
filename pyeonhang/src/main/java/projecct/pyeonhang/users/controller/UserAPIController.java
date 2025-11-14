@@ -293,7 +293,7 @@ public class UserAPIController {
     //(로그인 기준)찜목록추가
     @PostMapping("/user/wish")
     public ResponseEntity<ApiResponse<Object>> addMyWish(
-            @RequestParam int crawlId,
+            @RequestParam("crawlId") int crawlId,
             @AuthenticationPrincipal(expression = "username")
             String principalUserId
     ) {
@@ -336,7 +336,7 @@ public class UserAPIController {
     //(로그인 기준)찜 목록에서 삭제
     @DeleteMapping("/user/wish")
     public ResponseEntity<ApiResponse<Object>> removeMyWish(
-            @RequestParam int crawlId,
+            @RequestParam("crawlId") int crawlId,
             @AuthenticationPrincipal(expression = "username")
             String principalUserId
     ) {
@@ -393,7 +393,7 @@ public class UserAPIController {
     //쿠폰 교환
     @PostMapping("/user/coupon/{couponId}")
     public ResponseEntity<ApiResponse<Object>> exchangeCoupon(
-            @PathVariable int couponId,
+            @PathVariable("couponId") int couponId,
             @AuthenticationPrincipal(expression = "username") String principalUserId
     ) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();

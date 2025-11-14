@@ -40,7 +40,7 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
 
 
     // 체인별
-    List<CrawlingEntity> findTop10BySourceChainOrderByCrawlIdAsc(String sourceChain);
+    List<CrawlingEntity> findTop10BySourceChainOrderByCrawlIdAsc(@Param("sourceChain") String sourceChain);
 
     Page<CrawlingEntity> findByPromoType(
             CrawlingEntity.PromoType promoType, Pageable pageable

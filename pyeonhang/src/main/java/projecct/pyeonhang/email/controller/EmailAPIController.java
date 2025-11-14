@@ -20,7 +20,7 @@
 
         // 이메일로 인증코드 보내기
         @GetMapping("/email/auth/{email}")
-        public ResponseEntity<String> requestAuthcode(@PathVariable String email) {
+        public ResponseEntity<String> requestAuthcode(@PathVariable("email") String email) {
             // 1) 코드 생성
             String code = emailService.createCode();
 
