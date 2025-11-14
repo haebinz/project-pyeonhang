@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class UserCouponDTO  {
 
-    // private String userId;
+    private String userId;
     private int userCouponId;
     private int couponId;
     private String couponName;

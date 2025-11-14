@@ -36,7 +36,7 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
 
     // 현재 like_count 가져오기(선택)
     @Query("select c.likeCount from CrawlingEntity c where c.crawlId = :id")
-    Integer getLikeCount(@Param("id") int crawlId);
+    Integer getLikeCount( @Param("id")int crawlId);
 
 
     // 체인별

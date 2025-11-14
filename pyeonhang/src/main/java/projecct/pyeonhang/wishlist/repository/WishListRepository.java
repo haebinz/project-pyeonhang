@@ -11,14 +11,14 @@ import java.util.List;
 
 public interface WishListRepository extends JpaRepository<WishListEntity, WishListId> {
 
-    boolean existsByUser_UserIdAndProduct_CrawlId(String userId, Integer crawlId);
+    boolean existsByUser_UserIdAndProduct_CrawlId(@Param("userId")String userId,@Param("crawlId") Integer crawlId);
 
-    void deleteByUser_UserIdAndProduct_CrawlId(String userId, Integer crawlId);
+    void deleteByUser_UserIdAndProduct_CrawlId(@Param("userId")String userId,@Param("crawlId") Integer crawlId);
 
     @Query("select w from WishListEntity w join fetch w.product p join fetch w.user u where u.userId = :userId")
     List<WishListEntity> findAllWithProductByUserId(@Param("userId") String userId);
 
-    List<WishListEntity> findByUser_UserId(String userId);
+    List<WishListEntity> findByUser_UserId(@Param("userId")String userId);
 
 
 }
