@@ -150,7 +150,7 @@ public class AdminUserAPIController {
         } catch (Exception e) {
             log.error("배너 등록 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("배너 등록 실패:"+ e.getMessage()));
+                    .body(ApiResponse.fail("배너 등록 실패"));
         }
     }
 
@@ -169,23 +169,8 @@ public class AdminUserAPIController {
         } catch (Exception e) {
             log.error("배너 삭제 실패 bannerId={}: {}", bannerId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("배너 삭제 실패 bannerId=" + bannerId));
+                    .body(ApiResponse.fail("배너 삭제 실패"));
         }
-    }
-    //사용자 쿠폰 요청 목록 가져오기
-    @GetMapping("/admin/user/coupon")
-    public ResponseEntity<ApiResponse<Object>> couponRequestList(
-        @PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
-        Pageable pageable
-    ) {
-        try {
-            Map<String, Object> result = couponService.adminCouponList(pageable);
-            return ResponseEntity.ok(ApiResponse.ok(result));
-        } catch (Exception e) {
-            log.info("보유 쿠폰 목록 가져오기 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("보유 쿠폰 목록 가져오기 실패"));
-        }
-
     }
 
     // 쿠폰 목록
@@ -261,9 +246,6 @@ public class AdminUserAPIController {
         }
     }
 
-<<<<<<< HEAD
-    
-=======
     //게시글 전체 불러오기
     @GetMapping("/admin/board")
     public ResponseEntity<ApiResponse<Object>> getBoardList(
@@ -324,5 +306,4 @@ public class AdminUserAPIController {
                     .body(ApiResponse.fail("게시글 작성 실패"));
         }
     }
->>>>>>> branch1
 }

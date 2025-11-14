@@ -4,6 +4,7 @@ package projecct.pyeonhang.board.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import projecct.pyeonhang.common.entity.BaseTimeEntity;
 import projecct.pyeonhang.users.entity.UsersEntity;
 

@@ -54,7 +54,7 @@ public class CrawlingCommentService {
     @Transactional
     public Map<String, Object> addComment(Integer crawlId, String userId, CrawlingCommentRequestDTO dto) {
         UsersEntity user = usersRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 없음: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("로그인이 필요합니다 로그인해주세요 " + userId));
 
         projecct.pyeonhang.crawling.entity.CrawlingEntity product = crawlingRepository.findById(crawlId)
                 .orElseThrow(() -> new IllegalArgumentException("상품 없음(crawlId): " + crawlId));
