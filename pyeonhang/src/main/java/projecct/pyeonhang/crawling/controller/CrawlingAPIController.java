@@ -31,7 +31,6 @@ import java.util.Set;
 public class CrawlingAPIController {
 
     private final CrawlingService crawlingService;
-    private final CrawlingRepository crawlingRepository;
     private final CrawlingCommentService crawlingCommentService;
 
     //제품 정보 가져오기

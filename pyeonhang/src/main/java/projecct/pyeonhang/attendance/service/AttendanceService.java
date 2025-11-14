@@ -27,10 +27,10 @@ public class AttendanceService {
     private final UsersRepository usersRepository;
     private final PointsRepository pointsRepository;
 
-    // 하루 출석 포인트(환경설정으로 빼는게 좋음)
+    // 하루 출석 포인트
     private final int ATTENDANCE_POINT = 100;
 
-    //출석체크시 포인트 지급ㅂ
+    //출석체크시 포인트 지급
     @Transactional
     public Map<String, Object> checkAttendance(String userId) {
         Map<String, Object> resultMap = new HashMap<>();
