@@ -45,6 +45,7 @@ public class CloudinaryService implements CloudService {
     @Override
     /* publicId : 업로드 파일 경로를 포함한 cloudinaryId ex) coupon/dfs02318dl */
     public boolean deleteFile(String publicId) throws Exception {
+        log.info("삭제 요청 파일 : " +publicId);
         Map deleteResult = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
         return "ok".equals(deleteResult.get("result"));
     }

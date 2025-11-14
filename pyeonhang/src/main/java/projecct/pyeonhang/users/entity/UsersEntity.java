@@ -47,5 +47,7 @@ public class UsersEntity extends BaseTimeEntity {
     void applyDefaults() {
         if (delYn == null) delYn = "N";
         if (pointBalance == null) pointBalance = 0;
+        if (nickname == null) {this.nickname = this.userId;}
     }
+
 }
