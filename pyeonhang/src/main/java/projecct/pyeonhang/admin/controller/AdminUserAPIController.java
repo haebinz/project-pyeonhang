@@ -289,7 +289,6 @@ public class AdminUserAPIController {
         }
     }
 
-
     //게시글 등록(관리자 유저)
     @PostMapping("/admin/board")
     public ResponseEntity<ApiResponse<Object>> writeBoard(
@@ -306,7 +305,7 @@ public class AdminUserAPIController {
 
         try {
 
-            Map<String, Object> resultMap = boardService.writeBoard(principalUserId,writeRequest,cloudinaryRequest);
+            Map<String, Object> resultMap = boardService.writeBoard(principalUserId,writeRequest);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
 
         } catch (Exception e) {
@@ -316,6 +315,33 @@ public class AdminUserAPIController {
                     .body(ApiResponse.fail("게시글 작성 실패"));
         }
     }
+
+    // 게시물 이미지 업로드
+    @PostMapping("/admin/board/image")
+    public ResponseEntity<ApiResponse<Object>> uploadImage(
+            @RequestParam ("files") List<MultipartFile> files,
+            @RequestParam ("indexs") List<String> indexs,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+        ) {
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
+        }
+
+        try {
+            List<String> resultMap = boardService.uploadBoardImage(principalUserId, files, indexs);
+            return ResponseEntity.ok(ApiResponse.ok(resultMap));
+
+        } catch (Exception e) {
+            log.info("게시글 작성 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("게시글 작성 실패"));
+        }        
+    }
+    
+    
     //게시물 채택
     @PatchMapping("/admin/board/{brdId}/best")
     public ResponseEntity<ApiResponse<Object>> bestBoard(

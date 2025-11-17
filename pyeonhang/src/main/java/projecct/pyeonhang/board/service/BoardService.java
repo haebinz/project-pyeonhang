@@ -121,35 +121,29 @@ public class BoardService {
         return result;
     }
 
-    //게시글 등록
+   // 게시글 이미지 업로드
     @Transactional
-    public Map<String,Object> writeBoard(String userId,
-                                         BoardWriteRequest writeRequest,
-                                         BoardCloudinaryRequestDTO cloudinaryRequest) throws Exception {
+    public List<String> uploadBoardImage(String userId, List<MultipartFile> files, List<String>indexs ) throws Exception {
 
-
-        List<MultipartFile> files = cloudinaryRequest.getFiles();
         if (files == null || files.isEmpty()) {
             throw new RuntimeException("파일은 필수입니다.");
         }
-
-        Map<String,Object> resultMap = new HashMap<>();
 
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("로그인이 필요합니다."));
 
         BoardEntity boardEntity = new BoardEntity();
-        boardEntity.setTitle(writeRequest.getTitle());
-        boardEntity.setContents(writeRequest.getContents());
+        boardEntity.setTitle("");
+        boardEntity.setContents("");
         boardEntity.setUser(user);
-        boardEntity.setNoticeYn("N");
-        boardEntity.setBestYn("N");
-
-        boardRepository.save(boardEntity);
+        boardRepository.saveAndFlush(boardEntity); // 바로 DB에 저장, ID 발급
 
         List<String> uploadedUrls = new java.util.ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for (int i = 0; i < indexs.size(); i++) {
+            int index = Integer.parseInt(indexs.get(i));
+            MultipartFile file = files.get(index);
+
             if (file == null || file.isEmpty()) {
                 continue;
             }
@@ -172,6 +166,47 @@ public class BoardService {
             throw new RuntimeException("유효한 파일이 없습니다.");
         }
 
+        return uploadedUrls;
+    }
+
+
+    // 게시글 등록 전 임시 board 생성
+    @Transactional
+    public Map<String, Object> setBoard(String userId) throws Exception  {
+
+        Map<String,Object> resultMap = new HashMap<>();
+        
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("로그인이 필요합니다."));
+        BoardEntity boardEntity = new BoardEntity();
+        boardEntity.setTitle("");
+        boardEntity.setContents("");
+        boardEntity.setUser(user);
+        boardRepository.save(boardEntity);
+        resultMap.put("resultCode", 200);
+
+        return resultMap;
+    }
+
+
+    //게시글 등록
+    @Transactional
+    public Map<String,Object> writeBoard(String userId,
+                                         BoardWriteRequest writeRequest) throws Exception {
+
+        Map<String,Object> resultMap = new HashMap<>();
+
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("로그인이 필요합니다."));
+
+        BoardEntity boardEntity = new BoardEntity();
+        boardEntity.setTitle(writeRequest.getTitle());
+        boardEntity.setContents(writeRequest.getContents());
+        boardEntity.setUser(user);
+        boardEntity.setNoticeYn("N");
+        boardEntity.setBestYn("N");
+
+        boardRepository.save(boardEntity);
 
         resultMap.put("resultCode", 200);
         resultMap.put("bestYn", boardEntity.getBestYn());
@@ -181,7 +216,6 @@ public class BoardService {
         resultMap.put("boardContent", boardEntity.getContents());
         resultMap.put("writerId", user.getUserId());
         resultMap.put("writerNickname", user.getNickname());
-        resultMap.put("imageUrls", uploadedUrls); // 여러 개 이미지 URL 응답
 
         return resultMap;
     }

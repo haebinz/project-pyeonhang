@@ -59,6 +59,19 @@ public class BoardAPIController {
         }
     }
 
+    // 게시글 등록 전, 임시 board만들기...
+    @PostMapping("/board/write")
+    public ResponseEntity<ApiResponse<Object>> setBoard(@AuthenticationPrincipal(expression = "username") String principalUserId) {
+        try {
+            Map<String, Object> resultMap = boardService.setBoard(principalUserId);
+            return ResponseEntity.ok(ApiResponse.ok(resultMap));
+        }   catch(Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail("게시글 작성 실패"));
+        }
+    }
+
     //게시글 등록(로그인한 유저)
     @PostMapping("/board")
     public ResponseEntity<ApiResponse<Object>> writeBoard(
@@ -75,7 +88,7 @@ public class BoardAPIController {
 
         try {
 
-            Map<String, Object> resultMap = boardService.writeBoard(principalUserId,writeRequest,cloudinaryRequest);
+            Map<String, Object> resultMap = boardService.writeBoard(principalUserId,writeRequest);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
 
         } catch (Exception e) {
