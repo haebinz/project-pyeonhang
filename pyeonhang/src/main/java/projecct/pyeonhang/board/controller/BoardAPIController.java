@@ -35,20 +35,18 @@ public class BoardAPIController {
     //게시글 가져오기 + 검색
     @GetMapping("/board")
     public ResponseEntity<ApiResponse<Object>> getBoardList(
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sortType", defaultValue = "create") String sortType,
             @RequestParam(name = "searchType", required = false) String searchType,
-            @RequestParam(name = "keyword", required = false) String keyword
+            @RequestParam(name = "keyword", required = false) String keyword,
+            Pageable pageable
     ) {
 
         try {
             Map<String, Object> res = boardService.getBoardList(
-                    page,
-                    size,
                     sortType,
                     searchType,
-                    keyword
+                    keyword,
+                    pageable
             );
             return ResponseEntity.ok(ApiResponse.ok(res));
         } catch (Exception e) {
