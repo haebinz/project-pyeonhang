@@ -13,5 +13,12 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity,Int
 
     List<AttendanceEntity> findByUserIdOrderByAttendanceDateDesc(String userId);
 
+
+    //특정 월에 따른 조회
+    List<AttendanceEntity> findByUserIdAndAttendanceDateBetweenOrderByAttendanceDateDesc(
+            String userId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
 }
 

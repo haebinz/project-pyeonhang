@@ -43,6 +43,7 @@ public class AdminUserAPIController {
     private final BannerService bannerService;
     private final CouponService couponService;
     private final BoardService boardService;
+    private final AdminUserService adminUserService;
 
 
     //회원 리스트 가져오기
@@ -261,30 +262,24 @@ public class AdminUserAPIController {
         }
     }
 
-    //게시글 전체 불러오기
+    //게시글 가져오기 + 검색
     @GetMapping("/admin/board")
     public ResponseEntity<ApiResponse<Object>> getBoardList(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
-            @RequestParam(name = "sortField", defaultValue = "brdId") String sortField,  // 등록순
-            @RequestParam(name = "dir", defaultValue = "desc") String dir,               // 내림차순(최신순)
+            @RequestParam(name = "sortType", defaultValue = "create") String sortType,
             @RequestParam(name = "searchType", required = false) String searchType,
             @RequestParam(name = "keyword", required = false) String keyword
     ) {
-        // 정렬 가능한 필드 제한: 등록순(brdId), 추천순(likeCount)
-        Set<String> allowed = Set.of("brdId","likeCount");
-        if (!allowed.contains(sortField)) {
-            sortField = "brdId";
-        }
-
-        Sort.Direction direction = "desc".equalsIgnoreCase(dir)
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
         try {
-            Map<String, Object> res = boardService.getBoardList(pageable, searchType, keyword);
+            Map<String, Object> res = boardService.getBoardList(
+                    page,
+                    size,
+                    sortType,
+                    searchType,
+                    keyword
+            );
             return ResponseEntity.ok(ApiResponse.ok(res));
         } catch (Exception e) {
             log.info("게시글 리스트 가져오기 실패: {}", e.getMessage(), e);
@@ -294,8 +289,8 @@ public class AdminUserAPIController {
         }
     }
 
-    //관리자 게시글등록->공지?
-    //게시글 등록(로그인한 유저)
+
+    //게시글 등록(관리자 유저)
     @PostMapping("/admin/board")
     public ResponseEntity<ApiResponse<Object>> writeBoard(
             @Valid @ModelAttribute BoardWriteRequest writeRequest,
@@ -319,6 +314,83 @@ public class AdminUserAPIController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail("게시글 작성 실패"));
+        }
+    }
+    //게시물 채택
+    @PatchMapping("/admin/board/{brdId}/best")
+    public ResponseEntity<ApiResponse<Object>> bestBoard(
+            @PathVariable int brdId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
+        }
+
+        Map<String, Object> resultMap = userService.bestBoard(principalUserId, brdId);
+        int code = (int) resultMap.getOrDefault("resultCode", 500);
+
+        HttpStatus status = switch (code) {
+            case 200 -> HttpStatus.OK;
+            case 403 -> HttpStatus.FORBIDDEN;
+            case 409 -> HttpStatus.CONFLICT;
+            default -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+
+        return ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
+    }
+
+    //게시글 공지 설정
+    @PatchMapping("/admin/board/{brdId}/notice")
+    public ResponseEntity<ApiResponse<Object>> noticeBoard(
+            @PathVariable int brdId,
+            @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
+
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
+        }
+
+        Map<String, Object> resultMap = userService.noticeBoard(principalUserId, brdId);
+        int code = (int) resultMap.getOrDefault("resultCode", 500);
+
+        HttpStatus status = switch (code) {
+            case 200 -> HttpStatus.OK;
+            case 403 -> HttpStatus.FORBIDDEN;
+            case 409 -> HttpStatus.CONFLICT;
+            default -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+
+        return ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
+    }
+
+    //게시글 삭제
+    @DeleteMapping("admin/board/{brdId}")
+    public ResponseEntity<ApiResponse<Object>> deleteBoard(@PathVariable Integer brdId,
+                                                           @AuthenticationPrincipal(expression = "username") String principalUserId){
+        if (principalUserId == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "로그인이 필요합니다."));
+        }
+
+        try {
+            Map<String,Object> resultMap = adminUserService.deleteBoard(principalUserId, brdId);
+            return ResponseEntity.ok(ApiResponse.ok(resultMap));
+        } catch (RuntimeException e) {
+            log.info("관리자 게시글 삭제 실패: {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        } catch (Exception e) {
+            log.error("관리자 게시글 삭제 실패(서버 오류): {}", e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.fail(HttpStatus.INTERNAL_SERVER_ERROR.value(), "게시글을 삭제 할 수 없습니다"));
         }
     }
 }

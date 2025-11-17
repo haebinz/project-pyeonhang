@@ -96,6 +96,9 @@ dependencies {
     //이메일 전송
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    //캐싱
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
 
 
 }

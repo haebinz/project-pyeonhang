@@ -31,31 +31,25 @@ public class BoardAPIController {
     private final BoardCommentService boardCommentService;
 
 
-
-    // 게시글 리스트 + 검색
+    
+    //게시글 가져오기 + 검색
     @GetMapping("/board")
     public ResponseEntity<ApiResponse<Object>> getBoardList(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
-            @RequestParam(name = "sortField", defaultValue = "brdId") String sortField,  // 등록순
-            @RequestParam(name = "dir", defaultValue = "desc") String dir,               // 내림차순(최신순)
+            @RequestParam(name = "sortType", defaultValue = "create") String sortType,
             @RequestParam(name = "searchType", required = false) String searchType,
             @RequestParam(name = "keyword", required = false) String keyword
     ) {
-        // 정렬 가능한 필드 제한: 등록순(brdId), 추천순(likeCount)
-        Set<String> allowed = Set.of("brdId","likeCount");
-        if (!allowed.contains(sortField)) {
-            sortField = "brdId";
-        }
-
-        Sort.Direction direction = "desc".equalsIgnoreCase(dir)
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
         try {
-            Map<String, Object> res = boardService.getBoardList(pageable, searchType, keyword);
+            Map<String, Object> res = boardService.getBoardList(
+                    page,
+                    size,
+                    sortType,
+                    searchType,
+                    keyword
+            );
             return ResponseEntity.ok(ApiResponse.ok(res));
         } catch (Exception e) {
             log.info("게시글 리스트 가져오기 실패: {}", e.getMessage(), e);

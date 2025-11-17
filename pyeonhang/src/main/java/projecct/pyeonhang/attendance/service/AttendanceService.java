@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.attendance.entity.AttendanceEntity;
 import projecct.pyeonhang.attendance.repository.AttendanceRepository;
+import projecct.pyeonhang.board.entity.BoardEntity;
+import projecct.pyeonhang.board.repository.BoardRepository;
 import projecct.pyeonhang.point.entity.PointsEntity;
 import projecct.pyeonhang.point.repository.PointsRepository;
 import projecct.pyeonhang.users.entity.UsersEntity;
@@ -26,6 +28,7 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final UsersRepository usersRepository;
     private final PointsRepository pointsRepository;
+    private final BoardRepository boardRepository;
 
     // 하루 출석 포인트
     private final int ATTENDANCE_POINT = 100;
@@ -86,7 +89,8 @@ public class AttendanceService {
         return resultMap;
     }
 
-    @Transactional(readOnly = true)
+
+    /*@Transactional(readOnly = true)
     public Map<String, Object> listAttendanceDates(String userId) {
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -101,6 +105,39 @@ public class AttendanceService {
         resultMap.put("count", dates.size());
         resultMap.put("dates", dates);
         return resultMap;
+    }*/
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> listAttendanceDates(String userId) {
+        Map<String, Object> resultMap = new HashMap<>();
+
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+
+
+        LocalDate startOfMonth = today.withDayOfMonth(1);
+        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+
+
+        List<AttendanceEntity> list =
+                attendanceRepository.findByUserIdAndAttendanceDateBetweenOrderByAttendanceDateDesc(
+                        userId,
+                        startOfMonth,
+                        endOfMonth
+                );
+
+        List<String> dates = list.stream()
+                .map(a -> a.getAttendanceDate().toString())
+                .collect(Collectors.toList());
+
+        resultMap.put("resultCode", 200);
+        resultMap.put("year", today.getYear());
+        resultMap.put("month", today.getMonthValue());
+        resultMap.put("count", dates.size());
+        resultMap.put("dates", dates);
+        return resultMap;
     }
+
+
 
 }
