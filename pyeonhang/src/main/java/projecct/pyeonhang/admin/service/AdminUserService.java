@@ -66,6 +66,7 @@ public class AdminUserService  {
 
         return resultMap;
     }
+
     //관리자 페이지->사용자 delYn수정
     public Map<String,Object> changeUserDelYn(String userId){
         Map<String,Object> resultMap = new HashMap<>();
