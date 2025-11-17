@@ -4,7 +4,9 @@ package projecct.pyeonhang.board.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,16 +42,15 @@ public class BoardService {
     private final BoardLikeRepository boardLikeRepository;
 
 
-    private static String normalizeBlankToNull(String s) {
+    private static String normalizeBlank(String s) {
         if (s == null) return null;
         String v = s.trim();
         return v.isEmpty() ? null : v;
     }
 
-    // searchType 문자열 정리
     private static String normalizeSearchType(String raw, String keyword) {
-        keyword = normalizeBlankToNull(keyword);
-        if (keyword == null) return null;  // 키워드 없으면 타입도 의미 없음
+        keyword = normalizeBlank(keyword);
+        if (keyword == null) return null; // 키워드 없으면 검색 안함
 
         if (raw == null) return null;
         String v = raw.trim().toLowerCase();
@@ -57,52 +58,74 @@ public class BoardService {
         return switch (v) {
             case "title" -> "TITLE";
             case "titlecontents", "tc", "title_contents" -> "TITLE_CONTENTS";
+            case "writer" -> "WRITER";
             default -> null;
         };
     }
 
-    // 게시글 리스트 + 검색 + 페이징
+    private static String normalizeSortType(String raw) {
+        if (raw == null) return "CREATED"; // 기본: 등록순
+        String v = raw.trim();
+
+        return switch (v) {
+            case "like" -> "LIKE";
+            case "create" -> "CREATED";
+            default -> "CREATED";
+        };
+    }
+
+    //게시글 리스트 가져오기
     @Transactional(readOnly = true)
-    public Map<String,Object> getBoardList(Pageable pageable,
-                                           String searchTypeRaw,
-                                           String keywordRaw) {
+    public Map<String, Object> getBoardList(
+            int page,
+            int size,
+            String sortTypeRaw,
+            String searchTypeRaw,
+            String keywordRaw
+    ) {
+        Map<String, Object> result = new HashMap<>();
 
-        Map<String,Object> resultMap = new HashMap<>();
-
-        String keyword = normalizeBlankToNull(keywordRaw);
+        String keyword = normalizeBlank(keywordRaw);
         String searchType = normalizeSearchType(searchTypeRaw, keyword);
+        String sortType = normalizeSortType(sortTypeRaw);
 
-        Page<BoardEntity> pageResult = boardRepository.filterAll(searchType, keyword, pageable);
 
-        List<BoardResponse> boardList = pageResult.getContent().stream()
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<BoardEntity> pageResult =
+                boardRepository.findBoardList(searchType, keyword, sortType, pageable);
+
+        List<BoardResponse> items = pageResult.getContent().stream()
                 .map(b -> BoardResponse.builder()
                         .brdId(b.getBrdId())
                         .title(b.getTitle())
                         .contents(b.getContents())
                         .likeCount(b.getLikeCount())
                         .bestYn(b.getBestYn())
-                        .userId(b.getUser().getUserId())
+                        .noticeYn(b.getNoticeYn())
+                        .userId(b.getUser() != null ? b.getUser().getUserId() : null)
                         .createDate(b.getCreateDate())
                         .build()
                 )
                 .toList();
 
-        resultMap.put("searchType", searchType);
-        resultMap.put("keyword", keyword);
-        resultMap.put("totalElements", pageResult.getTotalElements());
-        resultMap.put("totalPages", pageResult.getTotalPages());
-        resultMap.put("currentPage", pageResult.getNumber());
-        resultMap.put("pageSize", pageResult.getSize());
-        resultMap.put("items", boardList);
+        result.put("items", items);
+        result.put("currentPage", pageResult.getNumber());
+        result.put("pageSize", pageResult.getSize());
+        result.put("totalPages", pageResult.getTotalPages());
+        result.put("totalElements", pageResult.getTotalElements());
+        result.put("searchType", searchType);
+        result.put("keyword", keyword);
+        result.put("sortType", sortType); // CREATED or LIKE
 
-        return resultMap;
+        return result;
     }
 
     //게시글 등록
     @Transactional
     public Map<String,Object> writeBoard(String userId,
                                          BoardWriteRequest writeRequest,
-                                         BoardCloudinaryRequestDTO cloudinaryRequest ) throws Exception {
+                                         BoardCloudinaryRequestDTO cloudinaryRequest) throws Exception {
 
 
         List<MultipartFile> files = cloudinaryRequest.getFiles();
@@ -119,6 +142,7 @@ public class BoardService {
         boardEntity.setTitle(writeRequest.getTitle());
         boardEntity.setContents(writeRequest.getContents());
         boardEntity.setUser(user);
+        boardEntity.setNoticeYn("N");
         boardEntity.setBestYn("N");
 
         boardRepository.save(boardEntity);
@@ -151,6 +175,7 @@ public class BoardService {
 
         resultMap.put("resultCode", 200);
         resultMap.put("bestYn", boardEntity.getBestYn());
+        resultMap.put("noticeYn",boardEntity.getNoticeYn());
         resultMap.put("boardId", boardEntity.getBrdId());
         resultMap.put("boardTitle", boardEntity.getTitle());
         resultMap.put("boardContent", boardEntity.getContents());

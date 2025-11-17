@@ -17,6 +17,7 @@ public class BoardResponse {
     private String contents;
     private int likeCount;
     private String bestYn;
+    private String noticeYn;
     private String userId;
     private LocalDateTime createDate;
 }

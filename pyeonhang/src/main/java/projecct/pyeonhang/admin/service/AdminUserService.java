@@ -3,6 +3,7 @@ package projecct.pyeonhang.admin.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.admin.dto.AdminUserDTO;
 import projecct.pyeonhang.admin.dto.AdminUserProjection;
 import projecct.pyeonhang.admin.dto.AdminUserSearchDTO;
+import projecct.pyeonhang.board.dto.BoardResponse;
+import projecct.pyeonhang.board.entity.BoardEntity;
 import projecct.pyeonhang.board.repository.BoardRepository;
 import projecct.pyeonhang.common.dto.PageVO;
 import projecct.pyeonhang.point.entity.PointsEntity;
@@ -121,6 +124,148 @@ public class AdminUserService  {
         return resultMap;
     }
 
+    //게시글 관리->게시글 채택
+    @Transactional
+    public Map<String,Object> bestBoard(String adminUserId, int brdId) {
+
+        Map<String,Object> resultMap = new HashMap<>();
+
+
+        UsersEntity admin = usersRepository.findById(adminUserId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
+
+        if (admin.getRole() == null || admin.getRole().getRoleId() == null) {
+            resultMap.put("resultCode", 403);
+            resultMap.put("resultMessage", "권한 정보가 없습니다.");
+            return resultMap;
+        }
+
+        String roleId = admin.getRole().getRoleId().toUpperCase();
+
+        if (!roleId.equals("ADMIN") && !roleId.equals("ROLE_ADMIN")) {
+            resultMap.put("resultCode", 403);
+            resultMap.put("resultMessage", "관리자만 게시글을 채택할 수 있습니다.");
+            return resultMap;
+        }
+
+        BoardEntity board = boardRepository.findById(brdId)
+                .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
+
+        if ("Y".equalsIgnoreCase(board.getBestYn())) {
+            resultMap.put("resultCode", 409);
+            resultMap.put("resultMessage", "이미 채택된 게시글입니다.");
+            resultMap.put("brdId", board.getBrdId());
+            resultMap.put("bestYn", board.getBestYn());
+            return resultMap;
+        }
+
+        board.setBestYn("Y");
+        boardRepository.save(board);
+
+        resultMap.put("resultCode", 200);
+        resultMap.put("resultMessage", "게시글이 채택되었습니다.");
+        resultMap.put("brdId", board.getBrdId());
+        resultMap.put("title", board.getTitle());
+        resultMap.put("bestYn", board.getBestYn());
+        if (board.getUser() != null) {
+            resultMap.put("writerId", board.getUser().getUserId());
+            resultMap.put("writerNickname", board.getUser().getNickname());
+        }
+
+        return resultMap;
+    }
+    
+    //게시글 공지로 등록
+    @Transactional
+    public Map<String,Object> noticeBoard(String adminUserId, int brdId) {
+
+        Map<String,Object> resultMap = new HashMap<>();
+
+
+        UsersEntity admin = usersRepository.findById(adminUserId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
+
+        if (admin.getRole() == null || admin.getRole().getRoleId() == null) {
+            resultMap.put("resultCode", 403);
+            resultMap.put("resultMessage", "권한 정보가 없습니다.");
+            return resultMap;
+        }
+
+        String roleId = admin.getRole().getRoleId().toUpperCase();
+
+        if (!roleId.equals("ADMIN") && !roleId.equals("ROLE_ADMIN")) {
+            resultMap.put("resultCode", 403);
+            resultMap.put("resultMessage", "관리자만 공지글로 선택할 수 있습니다.");
+            return resultMap;
+        }
+
+        BoardEntity board = boardRepository.findById(brdId)
+                .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
+
+        if ("Y".equalsIgnoreCase(board.getNoticeYn())) {
+            resultMap.put("resultCode", 409);
+            resultMap.put("resultMessage", "이미 공지로설정된 게시글입니다.");
+            resultMap.put("brdId", board.getBrdId());
+            resultMap.put("bestYn", board.getNoticeYn());
+            return resultMap;
+        }
+
+        board.setNoticeYn("Y");
+        boardRepository.save(board);
+
+        resultMap.put("resultCode", 200);
+        resultMap.put("resultMessage", "게시글이 공지로 설정되었습니다.");
+        resultMap.put("brdId", board.getBrdId());
+        resultMap.put("title", board.getTitle());
+        resultMap.put("bestYn", board.getNoticeYn());
+        if (board.getUser() != null) {
+            resultMap.put("writerId", board.getUser().getUserId());
+            resultMap.put("writerNickname", board.getUser().getNickname());
+        }
+
+        return resultMap;
+    }
+
+
+    //게시글 삭제
+    public Map<String,Object> deleteBoard(String adminUserId,Integer brdId){
+        Map<String,Object> resultMap = new HashMap<>();
+
+        if (adminUserId == null || adminUserId.isBlank()) {
+            throw new RuntimeException("로그인이 필요한 서비스입니다");
+        }
+        if (brdId == null) {
+            throw new RuntimeException("해당 게시글이 존재하지 않습니다.");
+        }
+
+        UsersEntity admin = usersRepository.findById(adminUserId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다"));
+
+        String roleId = (admin.getRole() != null && admin.getRole().getRoleId() != null)
+                ? admin.getRole().getRoleId().toUpperCase()
+                : "";
+
+        boolean isAdmin = roleId.equals("ADMIN") || roleId.equals("ROLE_ADMIN");
+
+        if (!isAdmin) {
+            throw new RuntimeException("관리자만 사용할 수 있는 기능입니다.");
+        }
+
+
+        BoardEntity board = boardRepository.findById(brdId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 게시물입니다."));
+
+
+        boardRepository.delete(board);
+
+        resultMap.put("resultCode", 200);
+        resultMap.put("resultMessage", "SUCCESS");
+        resultMap.put("deletedBoardId", brdId);
+        resultMap.put("deletedBy", adminUserId);
+
+        return resultMap;
+
+    }
 
 
 
