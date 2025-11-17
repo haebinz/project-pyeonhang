@@ -77,11 +77,10 @@ public class BoardService {
     //게시글 리스트 가져오기
     @Transactional(readOnly = true)
     public Map<String, Object> getBoardList(
-            int page,
-            int size,
             String sortTypeRaw,
             String searchTypeRaw,
-            String keywordRaw
+            String keywordRaw,
+            Pageable pageable   // ★ 여기로 변경
     ) {
         Map<String, Object> result = new HashMap<>();
 
@@ -89,11 +88,15 @@ public class BoardService {
         String searchType = normalizeSearchType(searchTypeRaw, keyword);
         String sortType = normalizeSortType(sortTypeRaw);
 
-
-        Pageable pageable = PageRequest.of(page, size);
+        // page, size는 Pageable에서 꺼냄
+        Pageable pageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+                // 정렬은 JPQL에서 :sortType 으로 처리하니까 여기선 굳이 Sort 안씀
+        );
 
         Page<BoardEntity> pageResult =
-                boardRepository.findBoardList(searchType, keyword, sortType, pageable);
+                boardRepository.findBoardList(searchType, keyword, sortType, pageRequest);
 
         List<BoardResponse> items = pageResult.getContent().stream()
                 .map(b -> BoardResponse.builder()

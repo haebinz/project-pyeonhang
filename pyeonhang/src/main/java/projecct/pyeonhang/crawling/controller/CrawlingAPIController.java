@@ -44,23 +44,8 @@ public class CrawlingAPIController {
             @PathVariable(name = "promoType", required = false) String promoType,
             @PathVariable(name = "productType", required = false) String productType,
             @RequestParam(name = "q", required = false) String q,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size,
-            @RequestParam(name = "sortField", defaultValue = "price") String sortField,
-            @RequestParam(name = "dir", defaultValue = "asc") String dir
+            Pageable pageable
     ) {
-
-        Set<String> allowed = Set.of("price", "likeCount"); // 필요하면 필드 추가
-
-        if (!allowed.contains(sortField)) {
-            sortField = "price";
-        }
-
-        Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        // Pageable 생성 (기본-price asc)
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-
         Map<String,Object> result = crawlingService.getByUnifiedFilters(
                 sourceChain, promoType, productType, q, pageable
         );
