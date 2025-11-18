@@ -42,6 +42,8 @@ spring:
           timeout: 5000
           writetimeout: 5000
     auth-code-expiration-millis: 1800000  # 30 * 60 * 1000 == 30?
+  cache:
+    type: simple
 
   #Database 설정
   datasource:

@@ -108,16 +108,14 @@ public class AttendanceService {
     }*/
 
     @Transactional(readOnly = true)
-    public Map<String, Object> listAttendanceDates(String userId) {
-        Map<String, Object> resultMap = new HashMap<>();
-
-
+    public Map<String, Object> listAttendanceDates(String userId, Integer year, Integer month) {
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
+        int targetYear = (year != null) ? year : today.getYear();
+        int targetMonth = (month != null) ? month : today.getMonthValue();
 
-        LocalDate startOfMonth = today.withDayOfMonth(1);
-        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-
+        LocalDate startOfMonth = LocalDate.of(targetYear, targetMonth, 1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
         List<AttendanceEntity> list =
                 attendanceRepository.findByUserIdAndAttendanceDateBetweenOrderByAttendanceDateDesc(
@@ -130,11 +128,13 @@ public class AttendanceService {
                 .map(a -> a.getAttendanceDate().toString())
                 .collect(Collectors.toList());
 
+        Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("resultCode", 200);
-        resultMap.put("year", today.getYear());
-        resultMap.put("month", today.getMonthValue());
+        resultMap.put("year", targetYear);
+        resultMap.put("month", targetMonth);
         resultMap.put("count", dates.size());
         resultMap.put("dates", dates);
+
         return resultMap;
     }
 

@@ -3,6 +3,8 @@ package projecct.pyeonhang.crawling.service;
 
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -79,7 +81,9 @@ public class CrawlingService {
     }
 
     //행사 유형별 가져오기
+    @Cacheable(value="getPromo")
     public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
+        System.out.println("메인페이지 캐싱 실행");
         Map<String,Object> resultMap = new HashMap<>();
 
         Page<CrawlingEntity> pageResult = crawlingRepository.findByPromoType(promoType, pageable);
@@ -103,7 +107,9 @@ public class CrawlingService {
 
 
     //트렌잭션 처리->업데이트 안되면 반영 X
+    //제품수정
     @Transactional
+    @CacheEvict(value="getPromo",allEntries=true)
     public Map<String,Object> updateCrawlingProduct(CrawlingRequestDTO dto) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
 
