@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -233,13 +234,14 @@ public class BoardAPIController {
     }
 
     //이미지 등록 시 cloudinary에 저장
-    @PostMapping("/board/{brdId}/image")
+    @PostMapping(value = "/board/{brdId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Object>> uploadImage(
             @PathVariable int brdId,
-            @RequestParam("files") List<MultipartFile> files
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam("indexs") List<String> indexs
     ){
         try {
-            Map<String, Object> result = boardService.uploadBoardImage(brdId, files);
+            Map<String, Object> result = boardService.uploadBoardImage(brdId, files, indexs);
             return ResponseEntity.ok(ApiResponse.ok(result));
         } catch (Exception e) {
             return ResponseEntity.status(500)

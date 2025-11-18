@@ -435,7 +435,7 @@ public class BoardService {
     }
     //이미지 업로드->cloudinary테이블에 저장
     @Transactional
-    public Map<String, Object> uploadBoardImage(int boardId, List<MultipartFile> files) throws Exception {
+    public Map<String, Object> uploadBoardImage(int boardId, List<MultipartFile> files, List<String> indexs) throws Exception {
 
         BoardEntity board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new RuntimeException("임시 게시글 없음"));
@@ -443,7 +443,9 @@ public class BoardService {
         List<String> uploadedUrls = new ArrayList<>();
         List<String> cloudinaryIds = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for(int i = 0; i < indexs.size(); i++) {
+            int index = Integer.parseInt(indexs.get(i));
+            MultipartFile file = files.get(index);
 
             if (file == null || file.isEmpty()) continue;
 
@@ -468,8 +470,6 @@ public class BoardService {
         resultMap.put("resultCode", 200);
         resultMap.put("uploadedUrls", uploadedUrls);
         resultMap.put("cloudinaryIds", cloudinaryIds);
-
-
 
         return resultMap;
     }
