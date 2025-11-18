@@ -1,6 +1,5 @@
 package projecct.pyeonhang.board.controller;
 
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,24 +32,20 @@ public class BoardAPIController {
     private final BoardService boardService;
     private final BoardCommentService boardCommentService;
 
-
-    
-    //게시글 가져오기 + 검색
+    // 게시글 가져오기 + 검색
     @GetMapping("/board")
     public ResponseEntity<ApiResponse<Object>> getBoardList(
             @RequestParam(name = "sortType", defaultValue = "create") String sortType,
             @RequestParam(name = "searchType", required = false) String searchType,
             @RequestParam(name = "keyword", required = false) String keyword,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
 
         try {
             Map<String, Object> res = boardService.getBoardList(
                     sortType,
                     searchType,
                     keyword,
-                    pageable
-            );
+                    pageable);
             return ResponseEntity.ok(ApiResponse.ok(res));
         } catch (Exception e) {
             log.info("게시글 리스트 가져오기 실패: {}", e.getMessage(), e);
@@ -60,14 +55,13 @@ public class BoardAPIController {
         }
     }
 
-    //게시글 수정
+    // 게시글 수정
     @PutMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> updateBoard(
             @PathVariable int brdId,
             @Valid @ModelAttribute BoardWriteRequest writeRequest,
             @ModelAttribute BoardCloudinaryRequestDTO cloudinaryRequest,
-            @AuthenticationPrincipal(expression = "username") String principalUserId
-    ) {
+            @AuthenticationPrincipal(expression = "username") String principalUserId) {
 
         if (principalUserId == null) {
             return ResponseEntity
@@ -76,8 +70,8 @@ public class BoardAPIController {
         }
 
         try {
-            Map<String, Object> resultMap =
-                    boardService.updateBoard(principalUserId, brdId, writeRequest, cloudinaryRequest);
+            Map<String, Object> resultMap = boardService.updateBoard(principalUserId, brdId, writeRequest,
+                    cloudinaryRequest);
 
             int code = (int) resultMap.getOrDefault("resultCode", 500);
 
@@ -97,8 +91,8 @@ public class BoardAPIController {
         }
 
     }
-    
-    //게시글 상세
+
+    // 게시글 상세
     @GetMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> getBoardDetail(@PathVariable int brdId) {
 
@@ -112,11 +106,11 @@ public class BoardAPIController {
                     .body(ApiResponse.fail(HttpStatus.NOT_FOUND.value(), "게시글을 찾을 수 없습니다."));
         }
     }
-    
-    //게시글 삭제(본인이 작성한 게시글 삭제)
+
+    // 게시글 삭제(본인이 작성한 게시글 삭제)
     @DeleteMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> deleteBoard(@PathVariable Integer brdId,
-                                                           @AuthenticationPrincipal(expression = "username") String principalUserId) {
+            @AuthenticationPrincipal(expression = "username") String principalUserId) {
 
         if (principalUserId == null) {
             return ResponseEntity
@@ -125,7 +119,7 @@ public class BoardAPIController {
         }
 
         try {
-            Map<String,Object> resultMap = boardService.deleteBoard(principalUserId, brdId);
+            Map<String, Object> resultMap = boardService.deleteBoard(principalUserId, brdId);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (RuntimeException e) {
             log.info("게시글 삭제 실패: {}", e.getMessage(), e);
@@ -141,58 +135,55 @@ public class BoardAPIController {
         }
     }
 
-    //게시판 댓글 등록(로그인 필요)
+    // 게시판 댓글 등록(로그인 필요)
     @PostMapping("/board/{brdId}/comment")
     public ResponseEntity<ApiResponse<Object>> writeComment(
             @PathVariable Integer brdId,
             @AuthenticationPrincipal(expression = "username") String principalUserId,
-            @Valid @ModelAttribute BoardCommentRequest commentRequest){
+            @Valid @ModelAttribute BoardCommentRequest commentRequest) {
 
-        Map<String,Object> resultMap = boardCommentService.addComment(brdId,principalUserId,commentRequest);
+        Map<String, Object> resultMap = boardCommentService.addComment(brdId, principalUserId, commentRequest);
         int code = (int) resultMap.getOrDefault("resultCode", 500);
         HttpStatus status = (code == 200) ? HttpStatus.CREATED : HttpStatus.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
 
     }
 
-    //게시판 댓글 수정(본인꺼)
+    // 게시판 댓글 수정(본인꺼)
     @PutMapping("board/comment/{commentId}")
     public ResponseEntity<ApiResponse<Object>> updateComment(
             @PathVariable Integer commentId,
             @AuthenticationPrincipal(expression = "username") String principalUserId,
-            @RequestParam("contents") String contents
-    ){
-        if(principalUserId == null) {
-           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.fail(403));
+            @RequestParam("contents") String contents) {
+        if (principalUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.fail(403));
         }
-        Map<String,Object> resultMap = boardCommentService.updateComment(commentId,principalUserId,contents);
+        Map<String, Object> resultMap = boardCommentService.updateComment(commentId, principalUserId, contents);
         int code = (int) resultMap.getOrDefault("resultCode", 500);
         HttpStatus status = (code == 200) ? HttpStatus.OK
                 : (code == 403) ? HttpStatus.FORBIDDEN
-                : (code == 404) ? HttpStatus.NOT_FOUND
-                : HttpStatus.INTERNAL_SERVER_ERROR;
-       return  ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
+                        : (code == 404) ? HttpStatus.NOT_FOUND
+                                : HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(status).body(ApiResponse.ok(resultMap));
     }
 
-    //게시판 댓글 삭제(작성자 본인 댓글 삭제, 로그인필요)
+    // 게시판 댓글 삭제(작성자 본인 댓글 삭제, 로그인필요)
     @DeleteMapping("board/comment/{commentId}")
     public ResponseEntity<ApiResponse<Object>> deleteComment(
             @PathVariable Integer commentId,
-            @AuthenticationPrincipal(expression = "username") String principalUserId){
-        if(principalUserId == null) {
+            @AuthenticationPrincipal(expression = "username") String principalUserId) {
+        if (principalUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.fail(403));
         }
-        Map<String,Object> resultMap = boardCommentService.delteComment(commentId,principalUserId);
-        return  ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+        Map<String, Object> resultMap = boardCommentService.delteComment(commentId, principalUserId);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
 
-
-    //추천 누르기
+    // 추천 누르기
     @PostMapping("/board/{brdId}/like")
     public ResponseEntity<ApiResponse<Object>> recommendBoard(
             @PathVariable int brdId,
-            @AuthenticationPrincipal(expression = "username") String principalUserId
-    ) {
+            @AuthenticationPrincipal(expression = "username") String principalUserId) {
 
         if (principalUserId == null) {
             return ResponseEntity
@@ -220,11 +211,10 @@ public class BoardAPIController {
         }
     }
 
-    //임시 테이블 생성
+    // 임시 테이블 생성
     @PostMapping("/board/temp")
     public ResponseEntity<ApiResponse<Object>> createTempBoard(
-            @AuthenticationPrincipal(expression = "username") String userId
-    ) {
+            @AuthenticationPrincipal(expression = "username") String userId) {
         try {
             Map<String, Object> result = boardService.createTempBoard(userId);
             return ResponseEntity.ok(ApiResponse.ok(result));
@@ -233,58 +223,55 @@ public class BoardAPIController {
         }
     }
 
-    //이미지 등록 시 cloudinary에 저장
-    @PostMapping(value = "/board/{brdId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    // 이미지 등록 시 cloudinary에 저장
+    @PostMapping("/board/{brdId}/image")
     public ResponseEntity<ApiResponse<Object>> uploadImage(
-            @PathVariable int brdId,
-            @RequestParam("files") List<MultipartFile> files,
-            @RequestParam("indexs") List<String> indexs
-    ){
+            @PathVariable("brdId") int brdId,
+            @RequestParam("file") MultipartFile file) {
         try {
-            Map<String, Object> result = boardService.uploadBoardImage(brdId, files, indexs);
+            Map<String, Object> result = boardService.uploadBoardImage(brdId, file);
             return ResponseEntity.ok(ApiResponse.ok(result));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.fail("이미지 업로드 실패"));
         }
     }
-    //글 등록(게시글 및 이미지)
+
+    // 글 등록(게시글 및 이미지)
     @PutMapping("/board/{brdId}/submit")
     public ResponseEntity<ApiResponse<Object>> submitBoard(
             @PathVariable int brdId,
             @Valid @ModelAttribute BoardWriteRequest dto,
-            @AuthenticationPrincipal(expression = "username") String userId
-    ){
+            @AuthenticationPrincipal(expression = "username") String userId) {
         try {
             Map<String, Object> result = boardService.submitBoard(brdId, userId, dto);
             return ResponseEntity.ok(ApiResponse.ok(result));
-        } catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.fail("게시글 등록 실패"));
         }
     }
-    //글 등록 취소 시 임시테이블 삭제
+
+    // 글 등록 취소 시 임시테이블 삭제
     @DeleteMapping("/board/{brdId}/cancel")
     public ResponseEntity<ApiResponse<Object>> cancelBoard(
             @PathVariable int brdId,
-            @AuthenticationPrincipal(expression = "username") String userId
-    ){
+            @AuthenticationPrincipal(expression = "username") String userId) {
         try {
             Map<String, Object> result = boardService.cancelBoard(brdId, userId);
             return ResponseEntity.ok(ApiResponse.ok(result));
-        } catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.fail("임시 게시글 삭제 실패"));
         }
     }
 
-    //이미지 등록했다가 빼기
+    // 이미지 등록했다가 빼기
     @DeleteMapping("/board/{brdId}/image/{cloudinaryId}")
     public ResponseEntity<ApiResponse<Object>> deleteBoardImage(
             @PathVariable int brdId,
             @PathVariable String cloudinaryId,
-            @AuthenticationPrincipal(expression = "username") String userId
-    ){
+            @AuthenticationPrincipal(expression = "username") String userId) {
         try {
             Map<String, Object> result = boardService.deleteBoardImage(brdId, cloudinaryId, userId);
             return ResponseEntity.ok(ApiResponse.ok(result));
