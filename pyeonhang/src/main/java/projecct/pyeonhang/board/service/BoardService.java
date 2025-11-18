@@ -24,10 +24,7 @@ import projecct.pyeonhang.common.service.CloudinaryService;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
@@ -226,19 +223,20 @@ public class BoardService {
 
     //게시글 수정
     @Transactional
-    public Map<String,Object> updateBoard(String userId,
-                                          int brdId,
-                                          BoardWriteRequest writeRequest,
-                                          BoardCloudinaryRequestDTO cloudinaryRequest) throws Exception {
+    public Map<String,Object> updateBoard(
+            String userId,
+            int brdId,
+            BoardWriteRequest writeRequest,
+            BoardCloudinaryRequestDTO cloudinaryRequest
+    ) throws Exception {
 
         Map<String,Object> resultMap = new HashMap<>();
 
-
-        BoardEntity boardEntity = boardRepository.findById(brdId)
+        BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
 
-        if (!boardEntity.getUser().getUserId().equals(userId)) {
+        if (!board.getUser().getUserId().equals(userId)) {
             resultMap.put("resultCode", 403);
             resultMap.put("resultMessage", "작성자만 수정할 수 있습니다.");
             return resultMap;
@@ -246,46 +244,49 @@ public class BoardService {
 
 
         if (writeRequest.getTitle() != null && !writeRequest.getTitle().isBlank()) {
-            boardEntity.setTitle(writeRequest.getTitle());
+            board.setTitle(writeRequest.getTitle());
         }
         if (writeRequest.getContents() != null && !writeRequest.getContents().isBlank()) {
-            boardEntity.setContents(writeRequest.getContents());
+            board.setContents(writeRequest.getContents());
         }
 
 
-        List<String> uploadedUrls = new java.util.ArrayList<>();
+        List<String> uploadedUrls = new ArrayList<>();
 
         if (cloudinaryRequest != null && cloudinaryRequest.getFiles() != null) {
-            List<MultipartFile> files = cloudinaryRequest.getFiles();
 
-            for (MultipartFile file : files) {
+            for (MultipartFile file : cloudinaryRequest.getFiles()) {
+
                 if (file == null || file.isEmpty()) continue;
 
                 String cloudinaryId = UUID.randomUUID().toString();
-                String folderPath = "board/" + brdId;  // writeBoard랑 동일하게 board/{brdId}
-                String imgUrl = cloudinaryService.uploadFile(file, folderPath, cloudinaryId);
+                String folder = "board/" + brdId;
 
-                BoardCloudinaryEntity cloudinaryEntity = new BoardCloudinaryEntity();
-                cloudinaryEntity.setCloudinaryId(cloudinaryId);
-                cloudinaryEntity.setImgUrl(imgUrl);
-                cloudinaryEntity.setBoard(boardEntity);
+                // Cloudinary 업로드
+                String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId);
 
-                boardCloudinaryRepository.save(cloudinaryEntity);
+                // DB 저장
+                BoardCloudinaryEntity entity = BoardCloudinaryEntity.builder()
+                        .cloudinaryId(cloudinaryId)
+                        .imgUrl(imgUrl)
+                        .board(board)
+                        .build();
 
+                boardCloudinaryRepository.save(entity);
                 uploadedUrls.add(imgUrl);
             }
         }
 
+        boardRepository.save(board);
 
-        boardRepository.save(boardEntity);
 
         resultMap.put("resultCode", 200);
-        resultMap.put("boardId", boardEntity.getBrdId());
-        resultMap.put("boardTitle", boardEntity.getTitle());
-        resultMap.put("boardContent", boardEntity.getContents());
-        resultMap.put("writerId", boardEntity.getUser().getUserId());
-        resultMap.put("writerNickname", boardEntity.getUser().getNickname());
-        resultMap.put("newImageUrls", uploadedUrls); // 수정 시 새로 추가된 이미지들
+        resultMap.put("boardId", board.getBrdId());
+        resultMap.put("boardTitle", board.getTitle());
+        resultMap.put("boardContent", board.getContents());
+        resultMap.put("writerId", board.getUser().getUserId());
+        resultMap.put("writerNickname", board.getUser().getNickname());
+        resultMap.put("newImageUrls", uploadedUrls);
 
         return resultMap;
     }
@@ -410,6 +411,160 @@ public class BoardService {
 
         return resultMap;
     }
+    //임시 게시글 생성
+    @Transactional
+    public Map<String, Object> createTempBoard(String userId) {
+
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("로그인 필요"));
+
+        BoardEntity board = new BoardEntity();
+        board.setUser(user);
+        board.setTitle("");
+        board.setContents("");
+        board.setNoticeYn("N");
+        board.setBestYn("N");
+
+        boardRepository.save(board);
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("resultCode", 200);
+        resultMap.put("boardId", board.getBrdId());
+
+        return resultMap;
+    }
+    //이미지 업로드->cloudinary테이블에 저장
+    @Transactional
+    public Map<String, Object> uploadBoardImage(int boardId, List<MultipartFile> files) throws Exception {
+
+        BoardEntity board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("임시 게시글 없음"));
+
+        List<String> uploadedUrls = new ArrayList<>();
+        List<String> cloudinaryIds = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+
+            if (file == null || file.isEmpty()) continue;
+
+            String cloudinaryId = UUID.randomUUID().toString();
+            String folder = "board/" + boardId;
+
+
+            String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId);
+
+            BoardCloudinaryEntity entity = BoardCloudinaryEntity.builder()
+                    .cloudinaryId(cloudinaryId)
+                    .imgUrl(imgUrl)
+                    .board(board)
+                    .build();
+
+            boardCloudinaryRepository.save(entity);
+            uploadedUrls.add(imgUrl);
+            cloudinaryIds.add(cloudinaryId);
+        }
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("resultCode", 200);
+        resultMap.put("uploadedUrls", uploadedUrls);
+        resultMap.put("cloudinaryIds", cloudinaryIds);
+
+
+
+        return resultMap;
+    }
+    //글 작성하기(이미지등록+제목/내용)입력
+    @Transactional
+    public Map<String, Object> submitBoard(int boardId, String userId, BoardWriteRequest dto) {
+
+        BoardEntity board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("임시 게시글 없음"));
+
+        if (!board.getUser().getUserId().equals(userId))
+            throw new RuntimeException("작성자만 등록 가능");
+
+        board.setTitle(dto.getTitle());
+        board.setContents(dto.getContents());
+
+        boardRepository.save(board);
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("resultCode", 200);
+        resultMap.put("boardId", board.getBrdId());
+        resultMap.put("title", board.getTitle());
+        resultMap.put("contents", board.getContents());
+
+        return resultMap;
+    }
+    //게시글 작성 취소
+    @Transactional
+    public Map<String, Object> cancelBoard(int boardId, String userId) {
+
+        BoardEntity board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("임시 게시글 없음"));
+
+        if (!board.getUser().getUserId().equals(userId))
+            throw new RuntimeException("작성자만 취소 가능");
+
+        // Cloudinary DB 삭제
+        List<BoardCloudinaryEntity> images =
+                boardCloudinaryRepository.findByBoard_BrdId(boardId);
+
+        for (BoardCloudinaryEntity img : images) {
+            String cloudinaryPath = "board/" + boardId + "/" + img.getCloudinaryId();
+            try {
+                cloudinaryService.deleteFile(cloudinaryPath);
+            } catch (Exception e) {
+                log.warn("Cloudinary 삭제 실패: " + cloudinaryPath);
+            }
+        }
+
+        boardCloudinaryRepository.deleteAll(images);
+        boardRepository.delete(board);
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("resultCode", 200);
+        resultMap.put("message", "임시 게시글 + 이미지 삭제 완료");
+
+        return resultMap;
+    }
+
+
+    //이미지 업로드
+    @Transactional
+    public Map<String, Object> deleteBoardImage(int boardId, String cloudinaryId, String userId) {
+
+        BoardEntity board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("게시글 없음"));
+
+        if (!board.getUser().getUserId().equals(userId)) {
+            throw new RuntimeException("작성자만 삭제 가능");
+        }
+
+        BoardCloudinaryEntity img =
+                boardCloudinaryRepository.findById(cloudinaryId)
+                        .orElseThrow(() -> new RuntimeException("이미지 없음"));
+
+        // Cloudinary 실제 파일 삭제
+        String cloudinaryPath = "board/" + boardId + "/" + cloudinaryId;
+        try {
+            cloudinaryService.deleteFile(cloudinaryPath);
+        } catch (Exception e){
+            log.warn("Cloudinary에서 파일 삭제 실패: {}", cloudinaryPath);
+        }
+
+        boardCloudinaryRepository.delete(img);
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("resultCode", 200);
+        resultMap.put("message", "이미지 삭제 완료");
+
+        return resultMap;
+    }
+
+
+
+
 
 
 

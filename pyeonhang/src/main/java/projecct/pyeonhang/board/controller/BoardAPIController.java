@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import projecct.pyeonhang.board.dto.BoardCloudinaryRequestDTO;
 import projecct.pyeonhang.board.dto.BoardCommentRequest;
 import projecct.pyeonhang.board.dto.BoardWriteRequest;
@@ -18,6 +19,7 @@ import projecct.pyeonhang.board.service.BoardCommentService;
 import projecct.pyeonhang.board.service.BoardService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,46 +59,6 @@ public class BoardAPIController {
         }
     }
 
-    // 게시글 등록 전, 임시 board만들기...
-    @PostMapping("/board/write")
-    public ResponseEntity<ApiResponse<Object>> setBoard(@AuthenticationPrincipal(expression = "username") String principalUserId) {
-        try {
-            Map<String, Object> resultMap = boardService.setBoard(principalUserId);
-            log.info("게시글 생성! 게시글 아이디 : " + resultMap.get("boardId"));
-            return ResponseEntity.ok(ApiResponse.ok(resultMap));
-        }   catch(Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("게시글 작성 실패"));
-        }
-    }
-
-    //게시글 등록(로그인한 유저)
-    @PostMapping("/board")
-    public ResponseEntity<ApiResponse<Object>> writeBoard(
-            @Valid @ModelAttribute BoardWriteRequest writeRequest,
-            @Valid @ModelAttribute BoardCloudinaryRequestDTO cloudinaryRequest,
-            @AuthenticationPrincipal(expression = "username") String principalUserId
-    ) {
-
-        if (principalUserId == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
-        }
-
-        try {
-
-            Map<String, Object> resultMap = boardService.writeBoard(principalUserId,writeRequest);
-            return ResponseEntity.ok(ApiResponse.ok(resultMap));
-
-        } catch (Exception e) {
-            log.info("게시글 작성 실패: {}", e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("게시글 작성 실패"));
-        }
-    }
     //게시글 수정
     @PutMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> updateBoard(
@@ -254,6 +216,78 @@ public class BoardAPIController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.fail("게시글 추천 실패"));
+        }
+    }
+
+    //임시 테이블 생성
+    @PostMapping("/board/temp")
+    public ResponseEntity<ApiResponse<Object>> createTempBoard(
+            @AuthenticationPrincipal(expression = "username") String userId
+    ) {
+        try {
+            Map<String, Object> result = boardService.createTempBoard(userId);
+            return ResponseEntity.ok(ApiResponse.ok(result));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.fail("임시 게시글 생성 실패"));
+        }
+    }
+
+    //이미지 등록 시 cloudinary에 저장
+    @PostMapping("/board/{brdId}/image")
+    public ResponseEntity<ApiResponse<Object>> uploadImage(
+            @PathVariable int brdId,
+            @RequestParam("files") List<MultipartFile> files
+    ){
+        try {
+            Map<String, Object> result = boardService.uploadBoardImage(brdId, files);
+            return ResponseEntity.ok(ApiResponse.ok(result));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.fail("이미지 업로드 실패"));
+        }
+    }
+    //글 등록(게시글 및 이미지)
+    @PutMapping("/board/{brdId}/submit")
+    public ResponseEntity<ApiResponse<Object>> submitBoard(
+            @PathVariable int brdId,
+            @Valid @ModelAttribute BoardWriteRequest dto,
+            @AuthenticationPrincipal(expression = "username") String userId
+    ){
+        try {
+            Map<String, Object> result = boardService.submitBoard(brdId, userId, dto);
+            return ResponseEntity.ok(ApiResponse.ok(result));
+        } catch (Exception e){
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.fail("게시글 등록 실패"));
+        }
+    }
+    //글 등록 취소 시 임시테이블 삭제
+    @DeleteMapping("/board/{brdId}/cancel")
+    public ResponseEntity<ApiResponse<Object>> cancelBoard(
+            @PathVariable int brdId,
+            @AuthenticationPrincipal(expression = "username") String userId
+    ){
+        try {
+            Map<String, Object> result = boardService.cancelBoard(brdId, userId);
+            return ResponseEntity.ok(ApiResponse.ok(result));
+        } catch (Exception e){
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.fail("임시 게시글 삭제 실패"));
+        }
+    }
+
+    //이미지 등록했다가 빼기
+    @DeleteMapping("/board/{brdId}/image/{cloudinaryId}")
+    public ResponseEntity<ApiResponse<Object>> deleteBoardImage(
+            @PathVariable int brdId,
+            @PathVariable String cloudinaryId,
+            @AuthenticationPrincipal(expression = "username") String userId
+    ){
+        try {
+            Map<String, Object> result = boardService.deleteBoardImage(brdId, cloudinaryId, userId);
+            return ResponseEntity.ok(ApiResponse.ok(result));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.fail("이미지 삭제 실패"));
         }
     }
 }
