@@ -36,7 +36,6 @@ import java.util.Set;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1")
-
 public class AdminUserAPIController {
 
     private final AdminUserService userService;

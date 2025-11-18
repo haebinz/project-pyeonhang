@@ -62,6 +62,7 @@ public class BoardAPIController {
     public ResponseEntity<ApiResponse<Object>> setBoard(@AuthenticationPrincipal(expression = "username") String principalUserId) {
         try {
             Map<String, Object> resultMap = boardService.setBoard(principalUserId);
+            log.info("게시글 생성! 게시글 아이디 : " + resultMap.get("boardId"));
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         }   catch(Exception e) {
             return ResponseEntity

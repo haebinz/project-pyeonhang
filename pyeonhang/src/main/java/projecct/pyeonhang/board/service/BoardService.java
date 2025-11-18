@@ -187,6 +187,7 @@ public class BoardService {
         boardEntity.setUser(user);
         boardRepository.save(boardEntity);
         resultMap.put("resultCode", 200);
+        resultMap.put("boardId", boardEntity.getBrdId());
 
         return resultMap;
     }
