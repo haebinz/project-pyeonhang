@@ -17,6 +17,7 @@ import projecct.pyeonhang.point.repository.PointsRepository;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +124,7 @@ public class AdminUserService  {
 
     //게시글 관리->게시글 채택
     @Transactional
-    public Map<String,Object> bestBoard(String adminUserId, int brdId) {
+    public Map<String,Object> bestBoard(String adminUserId, List<Integer> brdIdList) {
 
         Map<String,Object> resultMap = new HashMap<>();
 
@@ -145,36 +146,29 @@ public class AdminUserService  {
             return resultMap;
         }
 
-        BoardEntity board = boardRepository.findById(brdId)
-                .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
+        List<Integer> existingBrdIds = validateBoards(brdIdList);
+        
+        for (Integer brdId : existingBrdIds) {
+            BoardEntity board = boardRepository.findById(brdId)
+                    .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. ID: " + brdId));
+            
+            if ("Y".equals(board.getBestYn())) { 
+                continue; // 이미 채택된 게시글은 채택하지 않고 다음으로
+            }
 
-        if ("Y".equalsIgnoreCase(board.getBestYn())) {
-            resultMap.put("resultCode", 409);
-            resultMap.put("resultMessage", "이미 채택된 게시글입니다.");
-            resultMap.put("brdId", board.getBrdId());
-            resultMap.put("bestYn", board.getBestYn());
-            return resultMap;
+            // 실제 채택 처리
+            board.setBestYn("Y");
+            boardRepository.save(board);
         }
-
-        board.setBestYn("Y");
-        boardRepository.save(board);
 
         resultMap.put("resultCode", 200);
         resultMap.put("resultMessage", "게시글이 채택되었습니다.");
-        resultMap.put("brdId", board.getBrdId());
-        resultMap.put("title", board.getTitle());
-        resultMap.put("bestYn", board.getBestYn());
-        if (board.getUser() != null) {
-            resultMap.put("writerId", board.getUser().getUserId());
-            resultMap.put("writerNickname", board.getUser().getNickname());
-        }
-
         return resultMap;
     }
     
     //게시글 공지로 등록
     @Transactional
-    public Map<String,Object> noticeBoard(String adminUserId, int brdId) {
+    public Map<String,Object> noticeBoard(String adminUserId, List<Integer> brdIdList) {
 
         Map<String,Object> resultMap = new HashMap<>();
 
@@ -196,29 +190,25 @@ public class AdminUserService  {
             return resultMap;
         }
 
-        BoardEntity board = boardRepository.findById(brdId)
-                .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
+        List<Integer> existingBrdIds = validateBoards(brdIdList);
 
-        if ("Y".equalsIgnoreCase(board.getNoticeYn())) {
-            resultMap.put("resultCode", 409);
-            resultMap.put("resultMessage", "이미 공지로설정된 게시글입니다.");
-            resultMap.put("brdId", board.getBrdId());
-            resultMap.put("bestYn", board.getNoticeYn());
-            return resultMap;
+        for (Integer brdId : existingBrdIds) {
+            BoardEntity board = boardRepository.findById(brdId)
+                    .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
+
+            if ("Y".equals(board.getBestYn())) { 
+                board.setNoticeYn("N");
+                boardRepository.save(board);
+                continue;
+            }
+
+            board.setNoticeYn("Y");
+            boardRepository.save(board);
+
         }
-
-        board.setNoticeYn("Y");
-        boardRepository.save(board);
 
         resultMap.put("resultCode", 200);
-        resultMap.put("resultMessage", "게시글이 공지로 설정되었습니다.");
-        resultMap.put("brdId", board.getBrdId());
-        resultMap.put("title", board.getTitle());
-        resultMap.put("bestYn", board.getNoticeYn());
-        if (board.getUser() != null) {
-            resultMap.put("writerId", board.getUser().getUserId());
-            resultMap.put("writerNickname", board.getUser().getNickname());
-        }
+        resultMap.put("resultMessage", "게시글 공지 설정이 완료되었습니다.");
 
         return resultMap;
     }
@@ -230,18 +220,6 @@ public class AdminUserService  {
 
         if (adminUserId == null || adminUserId.isBlank()) {
             throw new RuntimeException("로그인이 필요한 서비스입니다");
-        }
-
-        // 게시글이 존재하는 brdId 리스트
-        List<Integer> existingBrdIds = boardRepository.findAllByBrdIdIn(brdIdList).stream().map(BoardEntity::getBrdId).toList();
-        
-        // 존재하지 않는 brdId 리스트
-        List<Integer> notFoundIds = brdIdList.stream()
-                                     .filter(id -> !existingBrdIds.contains(id))
-                                     .toList();        
-
-        if (!notFoundIds.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않는 게시물 ID: " + notFoundIds);
         }
 
         UsersEntity admin = usersRepository.findById(adminUserId)
@@ -257,6 +235,8 @@ public class AdminUserService  {
             throw new RuntimeException("관리자만 사용할 수 있는 기능입니다.");
         }
 
+        List<Integer> existingBrdIds = validateBoards(brdIdList);
+
         // 배열 한번에 삭제
         boardRepository.deleteAllById(existingBrdIds);
 
@@ -270,6 +250,23 @@ public class AdminUserService  {
     }
 
 
+    // 요청 받은 게시글 리스트 존재하는지 확인
+    private List<Integer> validateBoards(List<Integer> brdIdList) {
+        
+        // 게시글이 존재하는 brdId 리스트
+        List<Integer> existingBrdIds = boardRepository.findAllByBrdIdIn(brdIdList).stream().map(BoardEntity::getBrdId).toList();
+        
+        // 존재하지 않는 brdId 리스트
+        List<Integer> notFoundIds = brdIdList.stream()
+                                     .filter(id -> !existingBrdIds.contains(id))
+                                     .toList();        
 
+        if (!notFoundIds.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 게시물 ID: " + notFoundIds);
+        }
+
+        return existingBrdIds;
+
+    }
 
 }
