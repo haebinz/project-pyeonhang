@@ -14,10 +14,11 @@ public class BoardResponse {
 
     private int brdId;
     private String title;
-    private String contents;
+    private String userId;
+    // private String contents;
     private int likeCount;
+    private LocalDateTime createDate;
+    private LocalDateTime updateDate;
     private String bestYn;
     private String noticeYn;
-    private String userId;
-    private LocalDateTime createDate;
 }

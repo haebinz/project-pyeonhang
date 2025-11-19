@@ -99,12 +99,12 @@ public class BoardService {
                 .map(b -> BoardResponse.builder()
                         .brdId(b.getBrdId())
                         .title(b.getTitle())
-                        .contents(b.getContents())
                         .likeCount(b.getLikeCount())
                         .bestYn(b.getBestYn())
                         .noticeYn(b.getNoticeYn())
                         .userId(b.getUser() != null ? b.getUser().getUserId() : null)
                         .createDate(b.getCreateDate())
+                        .updateDate(b.getUpdateDate())
                         .build())
                 .toList();
 

@@ -94,7 +94,7 @@ public class BoardAPIController {
 
     // 게시글 상세
     @GetMapping("/board/{brdId}")
-    public ResponseEntity<ApiResponse<Object>> getBoardDetail(@PathVariable int brdId) {
+    public ResponseEntity<ApiResponse<Object>> getBoardDetail(@PathVariable("brdId") int brdId) {
 
         try {
             Map<String, Object> resultMap = boardService.getBoardDetail(brdId);
@@ -109,7 +109,7 @@ public class BoardAPIController {
 
     // 게시글 삭제(본인이 작성한 게시글 삭제)
     @DeleteMapping("/board/{brdId}")
-    public ResponseEntity<ApiResponse<Object>> deleteBoard(@PathVariable Integer brdId,
+    public ResponseEntity<ApiResponse<Object>> deleteBoard(@PathVariable("brdId") Integer brdId,
             @AuthenticationPrincipal(expression = "username") String principalUserId) {
 
         if (principalUserId == null) {
@@ -135,10 +135,23 @@ public class BoardAPIController {
         }
     }
 
+    // 게시판 댓글 리스트
+    @GetMapping("/board/{brdId}/comment") 
+    public ResponseEntity<ApiResponse<Object>> getComments(@PathVariable("brdId") Integer brdId) {
+        Map<String, Object> resultMap = boardCommentService.listCommentByBoardId(brdId);
+
+        try {
+            return ResponseEntity.ok(ApiResponse.ok(resultMap));
+        } catch(Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(ApiResponse.fail("댓글 조회 실패"));
+        }
+    };
+
     // 게시판 댓글 등록(로그인 필요)
     @PostMapping("/board/{brdId}/comment")
     public ResponseEntity<ApiResponse<Object>> writeComment(
-            @PathVariable Integer brdId,
+            @PathVariable("brdId") Integer brdId,
             @AuthenticationPrincipal(expression = "username") String principalUserId,
             @Valid @ModelAttribute BoardCommentRequest commentRequest) {
 
@@ -152,7 +165,7 @@ public class BoardAPIController {
     // 게시판 댓글 수정(본인꺼)
     @PutMapping("board/comment/{commentId}")
     public ResponseEntity<ApiResponse<Object>> updateComment(
-            @PathVariable Integer commentId,
+            @PathVariable("commentId") Integer commentId,
             @AuthenticationPrincipal(expression = "username") String principalUserId,
             @RequestParam("contents") String contents) {
         if (principalUserId == null) {
@@ -240,7 +253,7 @@ public class BoardAPIController {
     // 글 등록(게시글 및 이미지)
     @PutMapping("/board/{brdId}/submit")
     public ResponseEntity<ApiResponse<Object>> submitBoard(
-            @PathVariable int brdId,
+            @PathVariable("brdId") int brdId,
             @Valid @ModelAttribute BoardWriteRequest dto,
             @AuthenticationPrincipal(expression = "username") String userId) {
         try {

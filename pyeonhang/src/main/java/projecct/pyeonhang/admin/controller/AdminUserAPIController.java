@@ -21,12 +21,14 @@ import projecct.pyeonhang.banner.dto.BannerResponseDTO;
 import projecct.pyeonhang.banner.service.BannerService;
 import projecct.pyeonhang.board.dto.BoardCloudinaryRequestDTO;
 import projecct.pyeonhang.board.dto.BoardWriteRequest;
+import projecct.pyeonhang.board.dto.DeleteBoardRequest;
 import projecct.pyeonhang.board.service.BoardService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.coupon.dto.CouponRequestDTO;
 import projecct.pyeonhang.coupon.dto.CouponUpdateDTO;
 import projecct.pyeonhang.coupon.service.CouponService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -392,8 +394,8 @@ public class AdminUserAPIController {
     }
 
     //게시글 삭제
-    @DeleteMapping("admin/board/{brdId}")
-    public ResponseEntity<ApiResponse<Object>> deleteBoard(@PathVariable Integer brdId,
+    @DeleteMapping("admin/board")
+    public ResponseEntity<ApiResponse<Object>> deleteBoard(@RequestBody DeleteBoardRequest request,
                                                            @AuthenticationPrincipal(expression = "username") String principalUserId){
         if (principalUserId == null) {
             return ResponseEntity
@@ -402,7 +404,7 @@ public class AdminUserAPIController {
         }
 
         try {
-            Map<String,Object> resultMap = adminUserService.deleteBoard(principalUserId, brdId);
+            Map<String,Object> resultMap = adminUserService.deleteBoard(principalUserId, request.getBrdIdList());
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (RuntimeException e) {
             log.info("관리자 게시글 삭제 실패: {}", e.getMessage(), e);

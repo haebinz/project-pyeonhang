@@ -46,7 +46,7 @@ public class BoardCommentService {
 
         Map<String,Object> resultMap = new HashMap<>();
         resultMap.put("items",items);
-        resultMap.put("ccount",items.size());
+        resultMap.put("count",items.size());
         resultMap.put("content",items);
         return resultMap;
 
