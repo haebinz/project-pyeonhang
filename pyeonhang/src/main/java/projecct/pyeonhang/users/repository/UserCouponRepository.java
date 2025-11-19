@@ -1,5 +1,7 @@
 package projecct.pyeonhang.users.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,11 @@ public interface UserCouponRepository extends JpaRepository<UserCouponEntity,Int
             "order by uc.acquiredAt desc")
     List<UserCouponEntity> findAllByUserIdWithCoupon(@Param("userId") String userId);
 
-    @Query("SELECT uc FROM UserCouponEntity uc JOIN FETCH uc.coupon")
-    List<UserCouponEntity> findAllWithCoupon();
+   @Query(
+        value = "SELECT uc FROM UserCouponEntity uc JOIN FETCH uc.coupon c JOIN FETCH uc.user u",
+        countQuery = "SELECT COUNT(uc) FROM UserCouponEntity uc"
+    )
+    Page<UserCouponEntity> findAllWithAdminCoupon(Pageable pageable);
+
+
 }

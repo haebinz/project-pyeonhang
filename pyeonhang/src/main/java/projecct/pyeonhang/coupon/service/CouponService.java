@@ -161,9 +161,10 @@ public class CouponService {
     public Map<String, Object> adminCouponList(Pageable pageable) {
         Map<String, Object> result = new HashMap<>();
 
-        List<UserCouponEntity> list = userCouponRepository.findAllWithCoupon();
+         // pageable 적용 → 정렬은 Pageable에서 자동 적용
+        Page<UserCouponEntity> page = userCouponRepository.findAllWithAdminCoupon(pageable);
 
-        List<UserCouponDTO> items = list.stream().map(uc -> {
+        List<UserCouponDTO> items = page.getContent().stream().map(uc -> {
             var c = uc.getCoupon();
             return UserCouponDTO.builder()
                     .userCouponId(uc.getUserCouponId())
@@ -180,6 +181,8 @@ public class CouponService {
         result.put("resultCode", 200);
         result.put("count", items.size());
         result.put("items", items);
+        result.put("page", page.getNumber());
+        result.put("size", page.getSize());
         return result;
     }
 
