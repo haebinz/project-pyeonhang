@@ -3,22 +3,18 @@ package projecct.pyeonhang.admin.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.admin.dto.AdminUserDTO;
 import projecct.pyeonhang.admin.dto.AdminUserProjection;
 import projecct.pyeonhang.admin.dto.AdminUserSearchDTO;
-import projecct.pyeonhang.board.dto.BoardResponse;
 import projecct.pyeonhang.board.entity.BoardEntity;
 import projecct.pyeonhang.board.repository.BoardRepository;
 import projecct.pyeonhang.common.dto.PageVO;
 import projecct.pyeonhang.point.entity.PointsEntity;
 import projecct.pyeonhang.point.repository.PointsRepository;
 import projecct.pyeonhang.users.entity.UsersEntity;
-import projecct.pyeonhang.users.repository.UserRoleRepository;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
 import java.util.HashMap;
@@ -229,14 +225,23 @@ public class AdminUserService  {
 
 
     //게시글 삭제
-    public Map<String,Object> deleteBoard(String adminUserId,Integer brdId){
+    public Map<String,Object> deleteBoard(String adminUserId, List<Integer> brdIdList){
         Map<String,Object> resultMap = new HashMap<>();
 
         if (adminUserId == null || adminUserId.isBlank()) {
             throw new RuntimeException("로그인이 필요한 서비스입니다");
         }
-        if (brdId == null) {
-            throw new RuntimeException("해당 게시글이 존재하지 않습니다.");
+
+        // 게시글이 존재하는 brdId 리스트
+        List<Integer> existingBrdIds = boardRepository.findAllByBrdIdIn(brdIdList).stream().map(BoardEntity::getBrdId).toList();
+        
+        // 존재하지 않는 brdId 리스트
+        List<Integer> notFoundIds = brdIdList.stream()
+                                     .filter(id -> !existingBrdIds.contains(id))
+                                     .toList();        
+
+        if (!notFoundIds.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 게시물 ID: " + notFoundIds);
         }
 
         UsersEntity admin = usersRepository.findById(adminUserId)
@@ -252,16 +257,12 @@ public class AdminUserService  {
             throw new RuntimeException("관리자만 사용할 수 있는 기능입니다.");
         }
 
-
-        BoardEntity board = boardRepository.findById(brdId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 게시물입니다."));
-
-
-        boardRepository.delete(board);
+        // 배열 한번에 삭제
+        boardRepository.deleteAllById(existingBrdIds);
 
         resultMap.put("resultCode", 200);
         resultMap.put("resultMessage", "SUCCESS");
-        resultMap.put("deletedBoardId", brdId);
+        resultMap.put("deletedBoardId", existingBrdIds);
         resultMap.put("deletedBy", adminUserId);
 
         return resultMap;

@@ -1,6 +1,5 @@
 package projecct.pyeonhang.board.service;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,7 +25,6 @@ import projecct.pyeonhang.users.repository.UsersRepository;
 
 import java.util.*;
 
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -38,18 +36,20 @@ public class BoardService {
     private final BoardCloudinaryRepository boardCloudinaryRepository;
     private final BoardLikeRepository boardLikeRepository;
 
-
     private static String normalizeBlank(String s) {
-        if (s == null) return null;
+        if (s == null)
+            return null;
         String v = s.trim();
         return v.isEmpty() ? null : v;
     }
 
     private static String normalizeSearchType(String raw, String keyword) {
         keyword = normalizeBlank(keyword);
-        if (keyword == null) return null; // 키워드 없으면 검색 안함
+        if (keyword == null)
+            return null; // 키워드 없으면 검색 안함
 
-        if (raw == null) return null;
+        if (raw == null)
+            return null;
         String v = raw.trim().toLowerCase();
 
         return switch (v) {
@@ -61,7 +61,8 @@ public class BoardService {
     }
 
     private static String normalizeSortType(String raw) {
-        if (raw == null) return "CREATED"; // 기본: 등록순
+        if (raw == null)
+            return "CREATED"; // 기본: 등록순
         String v = raw.trim();
 
         return switch (v) {
@@ -71,13 +72,13 @@ public class BoardService {
         };
     }
 
-    //게시글 리스트 가져오기
+    // 게시글 리스트 가져오기
     @Transactional(readOnly = true)
     public Map<String, Object> getBoardList(
             String sortTypeRaw,
             String searchTypeRaw,
             String keywordRaw,
-            Pageable pageable   // ★ 여기로 변경
+            Pageable pageable // ★ 여기로 변경
     ) {
         Map<String, Object> result = new HashMap<>();
 
@@ -89,24 +90,22 @@ public class BoardService {
         Pageable pageRequest = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize()
-                // 정렬은 JPQL에서 :sortType 으로 처리하니까 여기선 굳이 Sort 안씀
+        // 정렬은 JPQL에서 :sortType 으로 처리하니까 여기선 굳이 Sort 안씀
         );
 
-        Page<BoardEntity> pageResult =
-                boardRepository.findBoardList(searchType, keyword, sortType, pageRequest);
+        Page<BoardEntity> pageResult = boardRepository.findBoardList(searchType, keyword, sortType, pageRequest);
 
         List<BoardResponse> items = pageResult.getContent().stream()
                 .map(b -> BoardResponse.builder()
                         .brdId(b.getBrdId())
                         .title(b.getTitle())
-                        .contents(b.getContents())
                         .likeCount(b.getLikeCount())
                         .bestYn(b.getBestYn())
                         .noticeYn(b.getNoticeYn())
                         .userId(b.getUser() != null ? b.getUser().getUserId() : null)
                         .createDate(b.getCreateDate())
-                        .build()
-                )
+                        .updateDate(b.getUpdateDate())
+                        .build())
                 .toList();
 
         result.put("items", items);
@@ -121,9 +120,10 @@ public class BoardService {
         return result;
     }
 
-   // 게시글 이미지 업로드
+    // 게시글 이미지 업로드
     @Transactional
-    public List<String> uploadBoardImage(String userId, List<MultipartFile> files, List<String>indexs ) throws Exception {
+    public List<String> uploadBoardImage(String userId, List<MultipartFile> files, List<String> indexs)
+            throws Exception {
 
         if (files == null || files.isEmpty()) {
             throw new RuntimeException("파일은 필수입니다.");
@@ -169,13 +169,12 @@ public class BoardService {
         return uploadedUrls;
     }
 
-
     // 게시글 등록 전 임시 board 생성
     @Transactional
-    public Map<String, Object> setBoard(String userId) throws Exception  {
+    public Map<String, Object> setBoard(String userId) throws Exception {
 
-        Map<String,Object> resultMap = new HashMap<>();
-        
+        Map<String, Object> resultMap = new HashMap<>();
+
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("로그인이 필요합니다."));
         BoardEntity boardEntity = new BoardEntity();
@@ -189,13 +188,12 @@ public class BoardService {
         return resultMap;
     }
 
-
-    //게시글 등록
+    // 게시글 등록
     @Transactional
-    public Map<String,Object> writeBoard(String userId,
-                                         BoardWriteRequest writeRequest) throws Exception {
+    public Map<String, Object> writeBoard(String userId,
+            BoardWriteRequest writeRequest) throws Exception {
 
-        Map<String,Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
 
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("로그인이 필요합니다."));
@@ -211,7 +209,7 @@ public class BoardService {
 
         resultMap.put("resultCode", 200);
         resultMap.put("bestYn", boardEntity.getBestYn());
-        resultMap.put("noticeYn",boardEntity.getNoticeYn());
+        resultMap.put("noticeYn", boardEntity.getNoticeYn());
         resultMap.put("boardId", boardEntity.getBrdId());
         resultMap.put("boardTitle", boardEntity.getTitle());
         resultMap.put("boardContent", boardEntity.getContents());
@@ -221,27 +219,24 @@ public class BoardService {
         return resultMap;
     }
 
-    //게시글 수정
+    // 게시글 수정
     @Transactional
-    public Map<String,Object> updateBoard(
+    public Map<String, Object> updateBoard(
             String userId,
             int brdId,
             BoardWriteRequest writeRequest,
-            BoardCloudinaryRequestDTO cloudinaryRequest
-    ) throws Exception {
+            BoardCloudinaryRequestDTO cloudinaryRequest) throws Exception {
 
-        Map<String,Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
 
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-
 
         if (!board.getUser().getUserId().equals(userId)) {
             resultMap.put("resultCode", 403);
             resultMap.put("resultMessage", "작성자만 수정할 수 있습니다.");
             return resultMap;
         }
-
 
         if (writeRequest.getTitle() != null && !writeRequest.getTitle().isBlank()) {
             board.setTitle(writeRequest.getTitle());
@@ -250,14 +245,14 @@ public class BoardService {
             board.setContents(writeRequest.getContents());
         }
 
-
         List<String> uploadedUrls = new ArrayList<>();
 
         if (cloudinaryRequest != null && cloudinaryRequest.getFiles() != null) {
 
             for (MultipartFile file : cloudinaryRequest.getFiles()) {
 
-                if (file == null || file.isEmpty()) continue;
+                if (file == null || file.isEmpty())
+                    continue;
 
                 String cloudinaryId = UUID.randomUUID().toString();
                 String folder = "board/" + brdId;
@@ -279,7 +274,6 @@ public class BoardService {
 
         boardRepository.save(board);
 
-
         resultMap.put("resultCode", 200);
         resultMap.put("boardId", board.getBrdId());
         resultMap.put("boardTitle", board.getTitle());
@@ -291,12 +285,11 @@ public class BoardService {
         return resultMap;
     }
 
-
-    //게시글 삭제
+    // 게시글 삭제
     @Transactional
-    public Map<String,Object> deleteBoard(String userId, Integer brdId) {
+    public Map<String, Object> deleteBoard(String userId, Integer brdId) {
 
-        Map<String,Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
 
         if (userId == null || userId.isBlank()) {
             throw new RuntimeException("로그인이 필요한 서비스입니다");
@@ -305,21 +298,17 @@ public class BoardService {
             throw new RuntimeException("해당 게시글이 존재하지 않습니다.");
         }
 
-
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다"));
 
-
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 게시물입니다."));
-
 
         if (!board.getUser().getUserId().equals(user.getUserId())) {
             throw new RuntimeException("본인이 작성한 게시글만 삭제할 수 있습니다.");
         }
 
         boardRepository.delete(board);
-
 
         resultMap.put("resultCode", 200);
         resultMap.put("resultMessage", "SUCCESS");
@@ -328,16 +317,14 @@ public class BoardService {
         return resultMap;
     }
 
-    //게시글 상세 보기
+    // 게시글 상세 보기
     @Transactional(readOnly = true)
     public Map<String, Object> getBoardDetail(int brdId) {
 
         Map<String, Object> resultMap = new HashMap<>();
 
-
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다. brdId=" + brdId));
-
 
         Map<String, Object> boardMap = new HashMap<>();
         boardMap.put("brdId", board.getBrdId());
@@ -353,23 +340,20 @@ public class BoardService {
             boardMap.put("userNickname", board.getUser().getNickname());
         }
 
-
-        List<BoardCloudinaryEntity> images =
-                boardCloudinaryRepository.findByBoard_BrdId(brdId);
+        List<BoardCloudinaryEntity> images = boardCloudinaryRepository.findByBoard_BrdId(brdId);
 
         List<String> imageUrls = images.stream()
                 .map(BoardCloudinaryEntity::getImgUrl)
                 .toList();
 
-
         resultMap.put("board", boardMap);
-        resultMap.put("images", imageUrls);   // 필요하면 cloudinaryId도 같이 내려줄 수 있음
+        resultMap.put("images", imageUrls); // 필요하면 cloudinaryId도 같이 내려줄 수 있음
         resultMap.put("resultCode", 200);
 
         return resultMap;
     }
 
-    //게시글 추천
+    // 게시글 추천
     @Transactional
     public Map<String, Object> boardRecommend(String userId, int brdId) {
         Map<String, Object> resultMap = new HashMap<>();
@@ -378,14 +362,11 @@ public class BoardService {
             throw new RuntimeException("로그인이 필요한 서비스입니다");
         }
 
-
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다"));
 
-
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 게시글입니다"));
-
 
         boolean alreadyLiked = boardLikeRepository.existsByBoardAndUser(board, user);
         if (alreadyLiked) {
@@ -411,7 +392,8 @@ public class BoardService {
 
         return resultMap;
     }
-    //임시 게시글 생성
+
+    // 임시 게시글 생성
     @Transactional
     public Map<String, Object> createTempBoard(String userId) {
 
@@ -433,47 +415,40 @@ public class BoardService {
 
         return resultMap;
     }
-    //이미지 업로드->cloudinary테이블에 저장
-    @Transactional
-    public Map<String, Object> uploadBoardImage(int boardId, List<MultipartFile> files) throws Exception {
 
-        BoardEntity board = boardRepository.findById(boardId)
+    // 이미지 업로드->cloudinary테이블에 저장
+    @Transactional
+    public Map<String, Object> uploadBoardImage(int brdId, MultipartFile file) throws Exception {
+
+        BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("임시 게시글 없음"));
 
-        List<String> uploadedUrls = new ArrayList<>();
-        List<String> cloudinaryIds = new ArrayList<>();
+        if (file == null || file.isEmpty())
+            throw new RuntimeException("첨부 파일 없음");
 
-        for (MultipartFile file : files) {
+        String cloudinaryId = UUID.randomUUID().toString();
+        String folder = "board/" + brdId;
 
-            if (file == null || file.isEmpty()) continue;
+        String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId);
 
-            String cloudinaryId = UUID.randomUUID().toString();
-            String folder = "board/" + boardId;
+        BoardCloudinaryEntity entity = BoardCloudinaryEntity.builder()
+                .cloudinaryId(cloudinaryId)
+                .imgUrl(imgUrl)
+                .board(board)
+                .build();
 
-
-            String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId);
-
-            BoardCloudinaryEntity entity = BoardCloudinaryEntity.builder()
-                    .cloudinaryId(cloudinaryId)
-                    .imgUrl(imgUrl)
-                    .board(board)
-                    .build();
-
-            boardCloudinaryRepository.save(entity);
-            uploadedUrls.add(imgUrl);
-            cloudinaryIds.add(cloudinaryId);
-        }
+        boardCloudinaryRepository.save(entity);
+        String uploadedUrl = imgUrl;
 
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("resultCode", 200);
-        resultMap.put("uploadedUrls", uploadedUrls);
-        resultMap.put("cloudinaryIds", cloudinaryIds);
-
-
+        resultMap.put("uploadedUrl", uploadedUrl);
+        resultMap.put("cloudinaryId", cloudinaryId);
 
         return resultMap;
     }
-    //글 작성하기(이미지등록+제목/내용)입력
+
+    // 글 작성하기(이미지등록+제목/내용)입력
     @Transactional
     public Map<String, Object> submitBoard(int boardId, String userId, BoardWriteRequest dto) {
 
@@ -496,7 +471,8 @@ public class BoardService {
 
         return resultMap;
     }
-    //게시글 작성 취소
+
+    // 게시글 작성 취소
     @Transactional
     public Map<String, Object> cancelBoard(int boardId, String userId) {
 
@@ -507,8 +483,7 @@ public class BoardService {
             throw new RuntimeException("작성자만 취소 가능");
 
         // Cloudinary DB 삭제
-        List<BoardCloudinaryEntity> images =
-                boardCloudinaryRepository.findByBoard_BrdId(boardId);
+        List<BoardCloudinaryEntity> images = boardCloudinaryRepository.findByBoard_BrdId(boardId);
 
         for (BoardCloudinaryEntity img : images) {
             String cloudinaryPath = "board/" + boardId + "/" + img.getCloudinaryId();
@@ -529,8 +504,7 @@ public class BoardService {
         return resultMap;
     }
 
-
-    //이미지 업로드
+    // 이미지 업로드
     @Transactional
     public Map<String, Object> deleteBoardImage(int boardId, String cloudinaryId, String userId) {
 
@@ -541,15 +515,14 @@ public class BoardService {
             throw new RuntimeException("작성자만 삭제 가능");
         }
 
-        BoardCloudinaryEntity img =
-                boardCloudinaryRepository.findById(cloudinaryId)
-                        .orElseThrow(() -> new RuntimeException("이미지 없음"));
+        BoardCloudinaryEntity img = boardCloudinaryRepository.findById(cloudinaryId)
+                .orElseThrow(() -> new RuntimeException("이미지 없음"));
 
         // Cloudinary 실제 파일 삭제
         String cloudinaryPath = "board/" + boardId + "/" + cloudinaryId;
         try {
             cloudinaryService.deleteFile(cloudinaryPath);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.warn("Cloudinary에서 파일 삭제 실패: {}", cloudinaryPath);
         }
 
@@ -561,12 +534,5 @@ public class BoardService {
 
         return resultMap;
     }
-
-
-
-
-
-
-
 
 }
