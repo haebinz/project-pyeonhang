@@ -191,7 +191,7 @@ public class AdminUserAPIController {
     // 쿠폰 목록
     @GetMapping("/admin/coupon")
     public ResponseEntity<ApiResponse<Object>> getCouponList(
-            @PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
+            @PageableDefault(page = 0, size = 20, sort = "createDate", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
         try {

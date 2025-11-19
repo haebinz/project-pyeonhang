@@ -1,6 +1,6 @@
 #서버 포트 설정
 server:
-  host : http://localhost #나중에 AWS도메인으로변경
+  host : https://pyeonhang.world/  #나중에 AWS도메인으로변경
   servlet:
     encoding:
       charset: 'UTF-8'
