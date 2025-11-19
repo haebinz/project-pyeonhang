@@ -29,6 +29,10 @@ public class CrawlingService {
     private final CrawlingRepository crawlingRepository;
     private final CrawlingCommentService crawlingCommentService;
 
+    @Cacheable(
+            value = "productList",
+            key = "#sourceChain + '-' + #promoTypeRaw + '-' + #productTypeRaw + '-' + #keyword + '-' + #pageable.pageNumber"
+    )
     public Map<String, Object> getByUnifiedFilters(
             String sourceChain,
             String promoTypeRaw,
@@ -36,6 +40,7 @@ public class CrawlingService {
             String keyword,
             Pageable pageable
     ) {
+        System.out.println("캐싱실행");
         String src = normalizeBlankToNull(sourceChain);
 
         CrawlingEntity.PromoType promo = parsePromo(promoTypeRaw);
@@ -81,7 +86,7 @@ public class CrawlingService {
     }
 
     //행사 유형별 가져오기
-    @Cacheable(value="getPromo")
+    @Cacheable(value="promoList")
     public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
         System.out.println("메인페이지 캐싱 실행");
         Map<String,Object> resultMap = new HashMap<>();
@@ -109,7 +114,7 @@ public class CrawlingService {
     //트렌잭션 처리->업데이트 안되면 반영 X
     //제품수정
     @Transactional
-    @CacheEvict(value="getPromo",allEntries=true)
+    @CacheEvict(value = {"productList", "promoList"}, allEntries = true)
     public Map<String,Object> updateCrawlingProduct(CrawlingRequestDTO dto) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -134,6 +139,7 @@ public class CrawlingService {
 
     //제품 삭제
     @Transactional
+    @CacheEvict(value = {"productList", "promoList"}, allEntries = true)
     public Map<String,Object> deleteCrawlingProduct(int crawlId) {
         Map<String,Object> resultMap = new HashMap<>();
 
