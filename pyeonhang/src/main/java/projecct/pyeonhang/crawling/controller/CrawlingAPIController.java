@@ -44,7 +44,7 @@ public class CrawlingAPIController {
             @PathVariable(name = "promoType", required = false) String promoType,
             @PathVariable(name = "productType", required = false) String productType,
             @RequestParam(name = "q", required = false) String q,
-            Pageable pageable
+            @PageableDefault(size = 20, page = 0, sort = "price") Pageable pageable
     ) {
         Map<String,Object> result = crawlingService.getByUnifiedFilters(
                 sourceChain, promoType, productType, q, pageable
