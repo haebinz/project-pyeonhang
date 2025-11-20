@@ -319,12 +319,14 @@ public class BoardService {
 
     // 게시글 상세 보기
     @Transactional(readOnly = true)
-    public Map<String, Object> getBoardDetail(int brdId) {
+    public Map<String, Object> getBoardDetail(int brdId, String principalUserId) {
 
         Map<String, Object> resultMap = new HashMap<>();
 
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다. brdId=" + brdId));
+
+        boolean isLiked = hasUserLiked(brdId, principalUserId);
 
         Map<String, Object> boardMap = new HashMap<>();
         boardMap.put("brdId", board.getBrdId());
@@ -334,6 +336,7 @@ public class BoardService {
         boardMap.put("bestYn", board.getBestYn());
         boardMap.put("createDate", board.getCreateDate());
         boardMap.put("updateDate", board.getUpdateDate());
+        boardMap.put("isLiked", isLiked);
 
         if (board.getUser() != null) {
             boardMap.put("userId", board.getUser().getUserId());
@@ -368,24 +371,27 @@ public class BoardService {
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 게시글입니다"));
 
-        boolean alreadyLiked = boardLikeRepository.existsByBoardAndUser(board, user);
-        if (alreadyLiked) {
-            resultMap.put("resultCode", 409);
-            resultMap.put("resultMessage", "추천은 한번만 가능합니다 ");
-            resultMap.put("likeCount", board.getLikeCount());
-            resultMap.put("brdId", board.getBrdId());
-            return resultMap;
+        Optional<BoardLikeEntity> existingLike = boardLikeRepository.findByBoardAndUser(board, user);
+
+        if (existingLike.isPresent()) {
+            BoardLikeEntity likeEntity = existingLike.get();
+            boardLikeRepository.delete(likeEntity);
+            board.setLikeCount(board.getLikeCount() - 1);
+            resultMap.put("resultMessage", "추천 해제");
+        } else {
+
+            BoardLikeEntity like = BoardLikeEntity.builder()
+                    .board(board)
+                    .user(user)
+                    .build();
+            boardLikeRepository.save(like);
+            board.setLikeCount(board.getLikeCount() + 1);
+            boardRepository.save(board);
+            resultMap.put("resultMessage", "개추성공");
         }
-        BoardLikeEntity like = BoardLikeEntity.builder()
-                .board(board)
-                .user(user)
-                .build();
-        boardLikeRepository.save(like);
-        board.setLikeCount(board.getLikeCount() + 1);
-        boardRepository.save(board);
+
 
         resultMap.put("resultCode", 200);
-        resultMap.put("resultMessage", "개추성공");
         resultMap.put("brdId", board.getBrdId());
         resultMap.put("likeCount", board.getLikeCount());
         resultMap.put("userId", user.getUserId());
@@ -533,6 +539,16 @@ public class BoardService {
         resultMap.put("message", "이미지 삭제 완료");
 
         return resultMap;
+    }
+
+
+    public boolean hasUserLiked(Integer boardId, String userId) {
+        BoardEntity board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
+
+        return boardLikeRepository.findByBoardAndUser(board, user).isPresent();
     }
 
 }
