@@ -94,10 +94,13 @@ public class BoardAPIController {
 
     // 게시글 상세
     @GetMapping("/board/{brdId}")
-    public ResponseEntity<ApiResponse<Object>> getBoardDetail(@PathVariable("brdId") int brdId) {
+    public ResponseEntity<ApiResponse<Object>> getBoardDetail(
+        @PathVariable("brdId") int brdId, 
+        @AuthenticationPrincipal(expression = "username") String principalUserId
+    ) {
 
         try {
-            Map<String, Object> resultMap = boardService.getBoardDetail(brdId);
+            Map<String, Object> resultMap = boardService.getBoardDetail(brdId, principalUserId);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (RuntimeException e) {
             log.info("게시글 상세 조회 실패: {}", e.getMessage(), e);
@@ -183,7 +186,7 @@ public class BoardAPIController {
     // 게시판 댓글 삭제(작성자 본인 댓글 삭제, 로그인필요)
     @DeleteMapping("board/comment/{commentId}")
     public ResponseEntity<ApiResponse<Object>> deleteComment(
-            @PathVariable Integer commentId,
+            @PathVariable("commentId") Integer commentId,
             @AuthenticationPrincipal(expression = "username") String principalUserId) {
         if (principalUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.fail(403));
@@ -195,7 +198,7 @@ public class BoardAPIController {
     // 추천 누르기
     @PostMapping("/board/{brdId}/like")
     public ResponseEntity<ApiResponse<Object>> recommendBoard(
-            @PathVariable int brdId,
+            @PathVariable("brdId") int brdId,
             @AuthenticationPrincipal(expression = "username") String principalUserId) {
 
         if (principalUserId == null) {
@@ -268,7 +271,7 @@ public class BoardAPIController {
     // 글 등록 취소 시 임시테이블 삭제
     @DeleteMapping("/board/{brdId}/cancel")
     public ResponseEntity<ApiResponse<Object>> cancelBoard(
-            @PathVariable int brdId,
+            @PathVariable("brdId") int brdId,
             @AuthenticationPrincipal(expression = "username") String userId) {
         try {
             Map<String, Object> result = boardService.cancelBoard(brdId, userId);
@@ -282,8 +285,8 @@ public class BoardAPIController {
     // 이미지 등록했다가 빼기
     @DeleteMapping("/board/{brdId}/image/{cloudinaryId}")
     public ResponseEntity<ApiResponse<Object>> deleteBoardImage(
-            @PathVariable int brdId,
-            @PathVariable String cloudinaryId,
+            @PathVariable("brdId") int brdId,
+            @PathVariable("cloudinaryId") String cloudinaryId,
             @AuthenticationPrincipal(expression = "username") String userId) {
         try {
             Map<String, Object> result = boardService.deleteBoardImage(brdId, cloudinaryId, userId);

@@ -21,7 +21,7 @@ import projecct.pyeonhang.banner.dto.BannerResponseDTO;
 import projecct.pyeonhang.banner.service.BannerService;
 import projecct.pyeonhang.board.dto.BoardCloudinaryRequestDTO;
 import projecct.pyeonhang.board.dto.BoardWriteRequest;
-import projecct.pyeonhang.board.dto.DeleteBoardRequest;
+import projecct.pyeonhang.board.dto.AdminBoardRequest;
 import projecct.pyeonhang.board.service.BoardService;
 import projecct.pyeonhang.common.dto.ApiResponse;
 import projecct.pyeonhang.coupon.dto.CouponRequestDTO;
@@ -341,9 +341,9 @@ public class AdminUserAPIController {
     
     
     //게시물 채택
-    @PatchMapping("/admin/board/{brdId}/best")
+    @PatchMapping("/admin/board/best")
     public ResponseEntity<ApiResponse<Object>> bestBoard(
-            @PathVariable int brdId,
+            @RequestBody AdminBoardRequest request,
             @AuthenticationPrincipal(expression = "username") String principalUserId
     ) {
 
@@ -353,7 +353,7 @@ public class AdminUserAPIController {
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
         }
 
-        Map<String, Object> resultMap = userService.bestBoard(principalUserId, brdId);
+        Map<String, Object> resultMap = userService.bestBoard(principalUserId, request.getBrdIdList());
         int code = (int) resultMap.getOrDefault("resultCode", 500);
 
         HttpStatus status = switch (code) {
@@ -367,9 +367,9 @@ public class AdminUserAPIController {
     }
 
     //게시글 공지 설정
-    @PatchMapping("/admin/board/{brdId}/notice")
+    @PatchMapping("/admin/board/notice")
     public ResponseEntity<ApiResponse<Object>> noticeBoard(
-            @PathVariable int brdId,
+            @RequestBody AdminBoardRequest request,
             @AuthenticationPrincipal(expression = "username") String principalUserId
     ) {
 
@@ -379,7 +379,7 @@ public class AdminUserAPIController {
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
         }
 
-        Map<String, Object> resultMap = userService.noticeBoard(principalUserId, brdId);
+        Map<String, Object> resultMap = userService.noticeBoard(principalUserId, request.getBrdIdList());
         int code = (int) resultMap.getOrDefault("resultCode", 500);
 
         HttpStatus status = switch (code) {
@@ -394,7 +394,7 @@ public class AdminUserAPIController {
 
     //게시글 삭제
     @DeleteMapping("admin/board")
-    public ResponseEntity<ApiResponse<Object>> deleteBoard(@RequestBody DeleteBoardRequest request,
+    public ResponseEntity<ApiResponse<Object>> deleteBoard(@RequestBody AdminBoardRequest request,
                                                            @AuthenticationPrincipal(expression = "username") String principalUserId){
         if (principalUserId == null) {
             return ResponseEntity

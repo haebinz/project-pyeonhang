@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,10 @@ public class CrawlingService {
 
     @Cacheable(
             value = "productList",
-            key = "#sourceChain + '-' + #promoTypeRaw + '-' + #productTypeRaw + '-' + #keyword + '-' + #pageable.pageNumber"
+            key = "#sourceChain + '-' + #promoTypeRaw + '-' + #productTypeRaw + '-' + #keyword + '-' + " +
+                    "(#pageable != null ? #pageable.pageNumber : 0) + '-' + " +
+                    "(#pageable != null ? #pageable.pageSize : 20)",
+            condition = "#pageable != null"
     )
     public Map<String, Object> getByUnifiedFilters(
             String sourceChain,
@@ -40,6 +44,9 @@ public class CrawlingService {
             String keyword,
             Pageable pageable
     ) {
+        if (pageable == null) {
+        pageable = PageRequest.of(0, 20);
+    }
         System.out.println("캐싱실행");
         String src = normalizeBlankToNull(sourceChain);
 
