@@ -224,12 +224,12 @@ public class BoardAPIController {
     // 임시 테이블 생성
     @PostMapping("/board/temp")
     public ResponseEntity<ApiResponse<Object>> createTempBoard(
-            @AuthenticationPrincipal(expression = "username") String userId) {
+            @AuthenticationPrincipal Object principal) {
         try {
-            Map<String, Object> result = boardService.createTempBoard(userId);
+            Map<String, Object> result = boardService.createTempBoard(principal);
             return ResponseEntity.ok(ApiResponse.ok(result));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.fail("임시 게시글 생성 실패"));
+            return ResponseEntity.status(500).body(ApiResponse.fail(e.getMessage()));
         }
     }
 

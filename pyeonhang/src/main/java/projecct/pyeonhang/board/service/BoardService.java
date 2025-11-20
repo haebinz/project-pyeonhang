@@ -425,10 +425,22 @@ public class BoardService {
 
     // 임시 게시글 생성
     @Transactional
-    public Map<String, Object> createTempBoard(String userId) {
+    public Map<String, Object> createTempBoard(Object principal) {
+
+        UserSecureDTO secureUser = null;
+
+        if (principal instanceof UserSecureDTO) {
+            secureUser = (UserSecureDTO) principal;
+        }
+
+        if (secureUser == null) {
+            throw new RuntimeException("로그인 후 이용하실 수 있습니다.");
+        }        
+
+        String userId = secureUser.getUsername();
 
         UsersEntity user = usersRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("로그인 필요"));
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
 
         BoardEntity board = new BoardEntity();
         board.setUser(user);

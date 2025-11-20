@@ -196,7 +196,7 @@ public class AdminUserService  {
             BoardEntity board = boardRepository.findById(brdId)
                     .orElseThrow(() -> new RuntimeException("게시글이 존재하지 않음"));
 
-            if ("Y".equals(board.getBestYn())) { 
+            if ("Y".equals(board.getNoticeYn())) { 
                 board.setNoticeYn("N");
                 boardRepository.save(board);
                 continue;
