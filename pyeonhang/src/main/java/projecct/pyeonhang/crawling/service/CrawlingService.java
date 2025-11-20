@@ -115,9 +115,6 @@ public class CrawlingService {
 
 
 
-
-
-
     //트렌잭션 처리->업데이트 안되면 반영 X
     //제품수정
     @Transactional
@@ -197,4 +194,19 @@ public class CrawlingService {
         return resultMap;
     }
 
+
+    public Map<String, Object> getTop5PopularProducts() {
+        Map<String, Object> result = new HashMap<>();
+
+        List<CrawlingEntity> entities = crawlingRepository.findTop5ByOrderByLikeCountDesc();
+
+        List<CrawlingDTO> items = entities.stream()
+                .map(CrawlingDTO::of)
+                .collect(Collectors.toList());
+
+        result.put("count", items.size());
+        result.put("items", items);
+
+        return result;
+    }
 }

@@ -146,5 +146,14 @@ public class CrawlingAPIController {
         Map<String, Object> resultMap = crawlingCommentService.deleteComment(commentId, principalUserId);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
+    //첫 페이지 인기행사상품
+    @GetMapping("/crawl/likeCount")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getProductLikeCount(
+            @PageableDefault(size = 5, page = 0,
+                    sort = "price",
+                    direction = Sort.Direction.ASC) Pageable pageable){
+        Map<String,Object> resultMap = crawlingService.getTop5PopularProducts();
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }
 
 }

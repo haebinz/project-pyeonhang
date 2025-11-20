@@ -46,6 +46,8 @@ public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer
             CrawlingEntity.PromoType promoType, Pageable pageable
     );
 
+    List<CrawlingEntity> findTop5ByOrderByLikeCountDesc();
+
 
 
 
