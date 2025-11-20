@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,7 @@ import projecct.pyeonhang.board.repository.BoardCloudinaryRepository;
 import projecct.pyeonhang.board.repository.BoardLikeRepository;
 import projecct.pyeonhang.board.repository.BoardRepository;
 import projecct.pyeonhang.common.service.CloudinaryService;
+import projecct.pyeonhang.users.dto.UserSecureDTO;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UsersRepository;
 
@@ -319,15 +321,28 @@ public class BoardService {
 
     // 게시글 상세 보기
     @Transactional(readOnly = true)
-    public Map<String, Object> getBoardDetail(int brdId, String principalUserId) {
+    public Map<String, Object> getBoardDetail(int brdId, Object principal) {
 
         Map<String, Object> resultMap = new HashMap<>();
 
         BoardEntity board = boardRepository.findById(brdId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다. brdId=" + brdId));
 
-        boolean isLiked = hasUserLiked(brdId, principalUserId);
+        UserSecureDTO secureUser = null;
+        boolean isLiked = false;
 
+        if (principal instanceof UserSecureDTO) {
+            secureUser = (UserSecureDTO) principal;
+        }
+
+        if (secureUser == null) {
+            isLiked = false;
+        } else {
+            String userId = secureUser.getUsername();
+            UsersEntity user = usersRepository.findById(userId).orElseThrow(() -> new RuntimeException("회원을 찾을 수 없습니다."));
+            isLiked = boardLikeRepository.findByBoardAndUser(board, user).isPresent();   
+        }
+    
         Map<String, Object> boardMap = new HashMap<>();
         boardMap.put("brdId", board.getBrdId());
         boardMap.put("title", board.getTitle());
@@ -358,12 +373,21 @@ public class BoardService {
 
     // 게시글 추천
     @Transactional
-    public Map<String, Object> boardRecommend(String userId, int brdId) {
+    public Map<String, Object> boardRecommend(Object principal, int brdId) {
+
         Map<String, Object> resultMap = new HashMap<>();
 
-        if (userId == null || userId.isBlank()) {
-            throw new RuntimeException("로그인이 필요한 서비스입니다");
+        UserSecureDTO secureUser = null;
+
+        if (principal instanceof UserSecureDTO) {
+            secureUser = (UserSecureDTO) principal;
         }
+
+        if (secureUser == null) {
+            throw new RuntimeException("로그인 후 이용하실 수 있습니다.");
+        }        
+
+        String userId = secureUser.getUsername();
 
         UsersEntity user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다"));
@@ -401,10 +425,22 @@ public class BoardService {
 
     // 임시 게시글 생성
     @Transactional
-    public Map<String, Object> createTempBoard(String userId) {
+    public Map<String, Object> createTempBoard(Object principal) {
+
+        UserSecureDTO secureUser = null;
+
+        if (principal instanceof UserSecureDTO) {
+            secureUser = (UserSecureDTO) principal;
+        }
+
+        if (secureUser == null) {
+            throw new RuntimeException("로그인 후 이용하실 수 있습니다.");
+        }        
+
+        String userId = secureUser.getUsername();
 
         UsersEntity user = usersRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("로그인 필요"));
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
 
         BoardEntity board = new BoardEntity();
         board.setUser(user);
