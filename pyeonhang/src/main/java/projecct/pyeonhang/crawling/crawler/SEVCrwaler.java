@@ -21,9 +21,9 @@ public class SEVCrwaler {
     private static final String WEB_DRIVER_PATH = "C:/chromedriver-win64/chromedriver.exe";
 
     // 네가 쓰던 cp_db 그대로 둠 (원하면 rc_db로 변경 가능)
-    private static final String DB_URL      = "jdbc:mariadb://localhost:3306/cp_db?useUnicode=true&characterEncoding=utf8";
+    private static final String DB_URL      = "jdbc:mariadb://pyeonhang-db.cjg402amekn6.ap-southeast-2.rds.amazonaws.com/pyeonhang?useUnicode=true&characterEncoding=utf8";
     private static final String DB_USER     = "root";
-    private static final String DB_PASSWORD = "1234";
+    private static final String DB_PASSWORD = "goqlsgoqls1";
 
     private static final String BASE_URL    = "https://www.7-eleven.co.kr";
 

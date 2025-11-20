@@ -19,9 +19,9 @@ public class GSCrawler {
     private static final String WEB_DRIVER_ID   = "webdriver.chrome.driver";
     private static final String WEB_DRIVER_PATH = "C:/chromedriver-win64/chromedriver.exe";
 
-    private static final String DB_URL      = "jdbc:mariadb://localhost:3306/cp_db?useUnicode=true&characterEncoding=utf8";
+    private static final String DB_URL      = "jdbc:mariadb://pyeonhang-db.cjg402amekn6.ap-southeast-2.rds.amazonaws.com/pyeonhang?useUnicode=true&characterEncoding=utf8";
     private static final String DB_USER     = "root";
-    private static final String DB_PASSWORD = "1234";
+    private static final String DB_PASSWORD = "goqlsgoqls1";
 
     // 정규식 패턴
     private static final Pattern NAME_PATTERN  =
