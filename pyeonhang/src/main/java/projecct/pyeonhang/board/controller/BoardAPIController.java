@@ -96,11 +96,11 @@ public class BoardAPIController {
     @GetMapping("/board/{brdId}")
     public ResponseEntity<ApiResponse<Object>> getBoardDetail(
         @PathVariable("brdId") int brdId, 
-        @AuthenticationPrincipal(expression = "username") String principalUserId
+        @AuthenticationPrincipal Object principal
     ) {
 
         try {
-            Map<String, Object> resultMap = boardService.getBoardDetail(brdId, principalUserId);
+            Map<String, Object> resultMap = boardService.getBoardDetail(brdId, principal);
             return ResponseEntity.ok(ApiResponse.ok(resultMap));
         } catch (RuntimeException e) {
             log.info("게시글 상세 조회 실패: {}", e.getMessage(), e);
@@ -199,16 +199,10 @@ public class BoardAPIController {
     @PostMapping("/board/{brdId}/like")
     public ResponseEntity<ApiResponse<Object>> recommendBoard(
             @PathVariable("brdId") int brdId,
-            @AuthenticationPrincipal(expression = "username") String principalUserId) {
-
-        if (principalUserId == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증되지 않음"));
-        }
+            @AuthenticationPrincipal Object principal) {
 
         try {
-            Map<String, Object> resultMap = boardService.boardRecommend(principalUserId, brdId);
+            Map<String, Object> resultMap = boardService.boardRecommend(principal, brdId);
             int code = (int) resultMap.getOrDefault("resultCode", 500);
 
             HttpStatus status = switch (code) {
@@ -223,7 +217,7 @@ public class BoardAPIController {
             log.info("게시글 추천 실패: {}", e.getMessage(), e);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.fail("게시글 추천 실패"));
+                    .body(ApiResponse.fail(e.getMessage()));
         }
     }
 
