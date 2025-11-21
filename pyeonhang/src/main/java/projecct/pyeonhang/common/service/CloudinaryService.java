@@ -4,9 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import projecct.pyeonhang.board.repository.BoardRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +30,18 @@ public class CloudinaryService implements CloudService {
         folder: 저장할 폴더 이름
         publicId : 저장할 파일 이름
      */
+    @Override
+    public String uploadFile(MultipartFile file, String folder, String publicId) throws Exception {
+
+        validateFile(file);
+
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "folder", folder,
+                "public_id", publicId
+        ));
+        return uploadResult.get("secure_url").toString();
+    }
+
     @Override
     public String uploadFile(MultipartFile file, String folder, String publicId, int width, int height) throws Exception {
 
@@ -128,13 +138,13 @@ public class CloudinaryService implements CloudService {
     
     // 파일 형식 검사
     private List<String> extentions =
-            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp", "svg");    
+            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp");    
 
     private void validateFile(MultipartFile file) throws Exception {
         Map<String, String> fileCheck = fileCheck(file);
         if (!extentions.contains(fileCheck.get("ext"))) {
-            throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
-        }
+            throw new RuntimeException(fileCheck.get("ext")+ "파일은 업로드가 불가능합니다.");
+        }       
     }    
 
     private Map<String, String> fileCheck(MultipartFile file) throws Exception {
