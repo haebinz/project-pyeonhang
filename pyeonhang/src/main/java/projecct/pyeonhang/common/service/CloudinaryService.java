@@ -1,10 +1,12 @@
 package projecct.pyeonhang.common.service;
 
 import com.cloudinary.Cloudinary;
-
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import projecct.pyeonhang.board.repository.BoardRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,15 +33,28 @@ public class CloudinaryService implements CloudService {
         publicId : 저장할 파일 이름
      */
     @Override
-    public String uploadFile(MultipartFile file, String folder, String publicId) throws Exception {
+    public String uploadFile(MultipartFile file, String folder, String publicId, int width, int height) throws Exception {
 
         validateFile(file);
 
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+        cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
                 "folder", folder,
                 "public_id", publicId
         ));
-        return uploadResult.get("secure_url").toString();
+
+    // 리사이즈 URL 생성
+        String resizedUrl = cloudinary.url()
+                .transformation(new Transformation()
+                        .width(width)
+                        .height(height)
+                        .crop("fill")
+                        .gravity("auto")
+                        .quality("auto")
+                        .fetchFormat("auto")
+                )
+                .generate(folder + "/" + publicId);
+
+        return resizedUrl;
     }
 
     @Override
@@ -71,6 +86,42 @@ public class CloudinaryService implements CloudService {
         } catch(IOException e) {
             log.error("이미지 업데이트 실패", e);
             throw new Exception("Cloudinary 업로드 실패", e);
+        }
+    }
+
+
+    // 파일 폴더 삭제
+    public void deleteBoardFolder(int brdId) throws Exception {
+        String folderPath = "board/" + brdId;
+
+        try {
+            // 1. 폴더 안의 모든 리소스 삭제
+            // 폴더 아래의 모든 파일 검색
+            Map result = cloudinary.api().resources(
+                    ObjectUtils.asMap(
+                            "type", "upload",
+                            "prefix", folderPath + "/"   // 중요
+                    )
+            );
+
+            List<Map> resources = (List<Map>) result.get("resources");
+
+            for (Map res : resources) {
+                String publicId = (String) res.get("public_id");
+
+                cloudinary.api().deleteResources(
+                        List.of(publicId),
+                        ObjectUtils.emptyMap()
+                );
+            }
+
+            // 2. 폴더 삭제
+            cloudinary.api().deleteFolder(folderPath, ObjectUtils.emptyMap());
+
+            System.out.println("Cloudinary folder deleted: " + folderPath);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete folder: " + folderPath, e);
         }
     }
 
