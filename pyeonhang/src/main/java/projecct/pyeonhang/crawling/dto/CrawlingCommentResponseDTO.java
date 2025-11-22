@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Getter
 @Setter
 @Builder
@@ -20,7 +22,9 @@ public class CrawlingCommentResponseDTO {
     private String userId;
     private String nickname;
     private String content;
+    @JsonProperty("createdDate")
     private LocalDateTime createDate;
+    @JsonProperty("updatedDate")
     private LocalDateTime updateDate;
 
 
