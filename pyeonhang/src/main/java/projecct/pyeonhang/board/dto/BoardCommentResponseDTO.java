@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Getter
 @Setter
 @Builder
@@ -17,6 +19,7 @@ public class BoardCommentResponseDTO {
     private Integer commentId;
     private Integer brdId;
     private String userId;
+    @JsonProperty("content")
     private String contents;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;

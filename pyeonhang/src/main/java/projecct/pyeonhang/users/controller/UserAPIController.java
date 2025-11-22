@@ -453,8 +453,8 @@ public class UserAPIController {
     @GetMapping("/user/attendance")
     public ResponseEntity<ApiResponse<Object>> getMyAttendance(
             @AuthenticationPrincipal(expression = "username") String principalUserId,
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Integer month
+            @RequestParam(name = "year",required = false) Integer year,
+            @RequestParam(name = "month",required = false) Integer month
     ) {
         if (principalUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
