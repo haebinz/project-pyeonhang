@@ -244,6 +244,19 @@ public class UserService {
     }
 
 
+    //사용자 탈퇴
+    @Transactional
+    public Map<String,Object> changeUserDelYn(String userId) {
+        Map<String,Object> resultMap = new HashMap<>();
+        UsersEntity user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않음"));
+        user.setDelYn("Y");
+        usersRepository.save(user);
+        resultMap.put("success", true);
+        resultMap.put("delYn", user.getDelYn());
+        return resultMap;
+    }
+
 
 
 

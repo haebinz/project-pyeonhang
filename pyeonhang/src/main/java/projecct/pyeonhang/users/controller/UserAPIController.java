@@ -278,7 +278,7 @@ public class UserAPIController {
                     .body(ApiResponse.fail(HttpStatus.UNAUTHORIZED.value(), "권한이 없습니다."));
         }
         try {
-
+            userService.changeUserDelYn(principalUserId);
             return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴가 완료되었습니다."));
         }catch (Exception e) {
             log.info("회원 탈퇴 실패: {}", e.getMessage(), e);
