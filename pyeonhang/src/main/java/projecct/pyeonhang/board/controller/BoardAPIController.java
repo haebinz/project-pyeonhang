@@ -289,4 +289,21 @@ public class BoardAPIController {
             return ResponseEntity.status(500).body(ApiResponse.fail("이미지 삭제 실패"));
         }
     }
+
+    // 이미지 리사이징
+    @GetMapping("/board/{brdId}/resizing")
+    public ResponseEntity<ApiResponse<Object>> getBoardImages(
+        @PathVariable("brdId") int brdId,
+        @PathVariable("cloudinaryId") String cloudinaryId,
+        @AuthenticationPrincipal(expression = "username") String userId
+    ) {
+
+        try {
+            Map<String, Object> result = boardService.deleteBoardImage(brdId, cloudinaryId, userId);
+            return ResponseEntity.ok(ApiResponse.ok(result));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.fail("이미지 삭제 실패"));
+        }
+
+    }
 }

@@ -92,7 +92,7 @@ public class BannerService {
                         request.setBannerId(currentBannerId);
                         return cloudinaryService.uploadFile(currentFile, "banner", currentBannerId);
                     } catch (Exception e) {
-                        throw new RuntimeException("업로드 실패: " + e.getMessage());
+                        throw new RuntimeException(e.getMessage());
                     }
                 }));
             }

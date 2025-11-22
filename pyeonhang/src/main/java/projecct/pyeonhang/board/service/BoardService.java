@@ -24,8 +24,14 @@ import projecct.pyeonhang.common.service.CloudinaryService;
 import projecct.pyeonhang.users.dto.UserSecureDTO;
 import projecct.pyeonhang.users.entity.UsersEntity;
 import projecct.pyeonhang.users.repository.UsersRepository;
+import java.awt.image.BufferedImage; // 파일 이미지 정보 가져오기
+import java.io.InputStream;
+
+import javax.imageio.ImageIO;
 
 import java.util.*;
+
+import javax.imageio.ImageIO;
 
 @Service
 @Slf4j
@@ -149,10 +155,17 @@ public class BoardService {
             if (file == null || file.isEmpty()) {
                 continue;
             }
+
+            InputStream is = file.getInputStream();
+            BufferedImage image = ImageIO.read(is);
+
+            int width = image.getWidth();
+            int height = image.getHeight();
+
             int brdId = boardEntity.getBrdId();
             String cloudinaryId = UUID.randomUUID().toString();
             String folderPath = "board/" + brdId;
-            String imgUrl = cloudinaryService.uploadFile(file, folderPath, cloudinaryId);
+            String imgUrl = cloudinaryService.uploadFile(file, folderPath, cloudinaryId, width, height);
 
             BoardCloudinaryEntity cloudinaryEntity = new BoardCloudinaryEntity();
             cloudinaryEntity.setCloudinaryId(cloudinaryId);
@@ -259,8 +272,14 @@ public class BoardService {
                 String cloudinaryId = UUID.randomUUID().toString();
                 String folder = "board/" + brdId;
 
+                InputStream is = file.getInputStream();
+                BufferedImage image = ImageIO.read(is);
+
+                int width = image.getWidth();
+                int height = image.getHeight();
+
                 // Cloudinary 업로드
-                String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId);
+                String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId, width, height);
 
                 // DB 저장
                 BoardCloudinaryEntity entity = BoardCloudinaryEntity.builder()
@@ -471,7 +490,13 @@ public class BoardService {
         String cloudinaryId = UUID.randomUUID().toString();
         String folder = "board/" + brdId;
 
-        String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId);
+        InputStream is = file.getInputStream();
+        BufferedImage image = ImageIO.read(is);
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        String imgUrl = cloudinaryService.uploadFile(file, folder, cloudinaryId, width, height);
 
         BoardCloudinaryEntity entity = BoardCloudinaryEntity.builder()
                 .cloudinaryId(cloudinaryId)
@@ -516,7 +541,7 @@ public class BoardService {
 
     // 게시글 작성 취소
     @Transactional
-    public Map<String, Object> cancelBoard(int boardId, String userId) {
+    public Map<String, Object> cancelBoard(int boardId, String userId) throws Exception {
 
         BoardEntity board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new RuntimeException("임시 게시글 없음"));
@@ -527,17 +552,14 @@ public class BoardService {
         // Cloudinary DB 삭제
         List<BoardCloudinaryEntity> images = boardCloudinaryRepository.findByBoard_BrdId(boardId);
 
-        for (BoardCloudinaryEntity img : images) {
-            String cloudinaryPath = "board/" + boardId + "/" + img.getCloudinaryId();
-            try {
-                cloudinaryService.deleteFile(cloudinaryPath);
-            } catch (Exception e) {
-                log.warn("Cloudinary 삭제 실패: " + cloudinaryPath);
-            }
-        }
-
+        
         boardCloudinaryRepository.deleteAll(images);
         boardRepository.delete(board);
+        try {
+            cloudinaryService.deleteBoardFolder(boardId);
+        } catch (Exception e) {
+            log.info("cloudinary 삭제할 폴더 없음, 무시됨");
+        }
 
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("resultCode", 200);
@@ -576,7 +598,6 @@ public class BoardService {
 
         return resultMap;
     }
-
 
     public boolean hasUserLiked(Integer boardId, String userId) {
         BoardEntity board = boardRepository.findById(boardId)

@@ -1,7 +1,7 @@
 package projecct.pyeonhang.common.service;
 
 import com.cloudinary.Cloudinary;
-
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +43,31 @@ public class CloudinaryService implements CloudService {
     }
 
     @Override
+    public String uploadFile(MultipartFile file, String folder, String publicId, int width, int height) throws Exception {
+
+        validateFile(file);
+
+        cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "folder", folder,
+                "public_id", publicId
+        ));
+
+    // 리사이즈 URL 생성
+        String resizedUrl = cloudinary.url()
+                .transformation(new Transformation()
+                        .width(width)
+                        .height(height)
+                        .crop("fill")
+                        .gravity("auto")
+                        .quality("auto")
+                        .fetchFormat("auto")
+                )
+                .generate(folder + "/" + publicId);
+
+        return resizedUrl;
+    }
+
+    @Override
     /* publicId : 업로드 파일 경로를 포함한 cloudinaryId ex) coupon/dfs02318dl */
     public boolean deleteFile(String publicId) throws Exception {
         log.info("삭제 요청 파일 : " +publicId);
@@ -74,16 +99,52 @@ public class CloudinaryService implements CloudService {
         }
     }
 
+
+    // 파일 폴더 삭제
+    public void deleteBoardFolder(int brdId) throws Exception {
+        String folderPath = "board/" + brdId;
+
+        try {
+            // 1. 폴더 안의 모든 리소스 삭제
+            // 폴더 아래의 모든 파일 검색
+            Map result = cloudinary.api().resources(
+                    ObjectUtils.asMap(
+                            "type", "upload",
+                            "prefix", folderPath + "/"   // 중요
+                    )
+            );
+
+            List<Map> resources = (List<Map>) result.get("resources");
+
+            for (Map res : resources) {
+                String publicId = (String) res.get("public_id");
+
+                cloudinary.api().deleteResources(
+                        List.of(publicId),
+                        ObjectUtils.emptyMap()
+                );
+            }
+
+            // 2. 폴더 삭제
+            cloudinary.api().deleteFolder(folderPath, ObjectUtils.emptyMap());
+
+            System.out.println("Cloudinary folder deleted: " + folderPath);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete folder: " + folderPath, e);
+        }
+    }
+
     
     // 파일 형식 검사
     private List<String> extentions =
-            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp", "svg");    
+            Arrays.asList("jpg", "jpeg", "gif", "png", "webp", "bmp");    
 
     private void validateFile(MultipartFile file) throws Exception {
         Map<String, String> fileCheck = fileCheck(file);
         if (!extentions.contains(fileCheck.get("ext"))) {
-            throw new RuntimeException("파일형식이 맞지 않습니다. 이미지만 가능합니다.");
-        }
+            throw new RuntimeException(fileCheck.get("ext")+ "파일은 업로드가 불가능합니다.");
+        }       
     }    
 
     private Map<String, String> fileCheck(MultipartFile file) throws Exception {
