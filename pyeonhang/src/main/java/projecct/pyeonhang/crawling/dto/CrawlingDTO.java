@@ -1,6 +1,8 @@
 package projecct.pyeonhang.crawling.dto;
 
 
+import java.time.LocalDateTime;
+
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import projecct.pyeonhang.crawling.entity.CrawlingEntity;
@@ -22,6 +24,7 @@ public class CrawlingDTO {
     private CrawlingEntity.PromoType promoType;
     private Integer likeCount;
     private CrawlingEntity.ProductType productType;
+    private LocalDateTime crawledAt;
 
 
     public static CrawlingDTO of(CrawlingEntity entity) {
@@ -35,6 +38,7 @@ public class CrawlingDTO {
                 .promoType(entity.getPromoType())
                 .likeCount(entity.getLikeCount())
                 .productType(entity.getProductType())
+                .crawledAt(entity.getCrawledAt())
                 .build();
 
     }

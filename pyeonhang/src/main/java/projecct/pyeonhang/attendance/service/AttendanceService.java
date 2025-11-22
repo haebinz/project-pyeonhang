@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import projecct.pyeonhang.attendance.entity.AttendanceEntity;
 import projecct.pyeonhang.attendance.repository.AttendanceRepository;
+import projecct.pyeonhang.board.entity.BoardEntity;
+import projecct.pyeonhang.board.repository.BoardRepository;
 import projecct.pyeonhang.point.entity.PointsEntity;
 import projecct.pyeonhang.point.repository.PointsRepository;
 import projecct.pyeonhang.users.entity.UsersEntity;
@@ -26,11 +28,12 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final UsersRepository usersRepository;
     private final PointsRepository pointsRepository;
+    private final BoardRepository boardRepository;
 
-    // 하루 출석 포인트(환경설정으로 빼는게 좋음)
+    // 하루 출석 포인트
     private final int ATTENDANCE_POINT = 100;
 
-    //출석체크시 포인트 지급ㅂ
+    //출석체크시 포인트 지급
     @Transactional
     public Map<String, Object> checkAttendance(String userId) {
         Map<String, Object> resultMap = new HashMap<>();
@@ -86,7 +89,8 @@ public class AttendanceService {
         return resultMap;
     }
 
-    @Transactional(readOnly = true)
+
+    /*@Transactional(readOnly = true)
     public Map<String, Object> listAttendanceDates(String userId) {
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -101,6 +105,39 @@ public class AttendanceService {
         resultMap.put("count", dates.size());
         resultMap.put("dates", dates);
         return resultMap;
+    }*/
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> listAttendanceDates(String userId, Integer year, Integer month) {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+
+        int targetYear = (year != null) ? year : today.getYear();
+        int targetMonth = (month != null) ? month : today.getMonthValue();
+
+        LocalDate startOfMonth = LocalDate.of(targetYear, targetMonth, 1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<AttendanceEntity> list =
+                attendanceRepository.findByUserIdAndAttendanceDateBetweenOrderByAttendanceDateDesc(
+                        userId,
+                        startOfMonth,
+                        endOfMonth
+                );
+
+        List<String> dates = list.stream()
+                .map(a -> a.getAttendanceDate().toString())
+                .collect(Collectors.toList());
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("resultCode", 200);
+        resultMap.put("year", targetYear);
+        resultMap.put("month", targetMonth);
+        resultMap.put("count", dates.size());
+        resultMap.put("dates", dates);
+
+        return resultMap;
     }
+
+
 
 }

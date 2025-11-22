@@ -150,7 +150,7 @@ public class UserService {
     @Value("${app.pwd-reset.code-ttl-seconds:600}")
     private long codeTtlSeconds;
 
-    // 1) 아이디+이메일 검증 -> 코드 생성 -> DB(해시) 저장 -> 이메일 전송
+
     @Transactional
     public void requestPasswordReset(String userId, String email) {
         UsersEntity user = usersRepository.findById(userId)
@@ -160,8 +160,8 @@ public class UserService {
             throw new IllegalArgumentException("userId와 email이 일치하지 않습니다.");
         }
 
-        String code = emailService.createCode();            // 원본 코드 (메일로 보낼 것)
-        String codeHash = HashUtils.sha256Hex(code);        // DB에는 해시 저장
+        String code = emailService.createCode();
+        String codeHash = HashUtils.sha256Hex(code);
 
         EmailEntity ev = new EmailEntity();
         ev.setUser(user);
@@ -177,7 +177,7 @@ public class UserService {
         }
     }
 
-    // 2) 코드 검증 (단순 확인용) — true면 OK
+
     @Transactional(readOnly = true)
     public boolean verifyCode(String userId, String email, String code) {
         UsersEntity user = usersRepository.findById(userId)
@@ -222,7 +222,7 @@ public class UserService {
         emailRepository.save(ev);
     }
 
-    // 4) (선택) 세션 없이 바로 비밀번호 변경하려면 이 메서드 사용
+    //세션 없이 바로 비밀번호 변경하려면 이 메서드 사용
     @Transactional
     public void verifyAndResetPassword(String userId, String email, String code, String newPassword) {
         if (!verifyCode(userId, email, code)) throw new IllegalArgumentException("인증 실패");

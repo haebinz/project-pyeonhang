@@ -30,7 +30,6 @@ import java.util.Set;
 public class CrawlingAPIController {
 
     private final CrawlingService crawlingService;
-    private final CrawlingRepository crawlingRepository;
     private final CrawlingCommentService crawlingCommentService;
 
     // 제품 정보 가져오기
@@ -45,28 +44,8 @@ public class CrawlingAPIController {
             @PathVariable(name = "promoType", required = false) String promoType,
             @PathVariable(name = "productType", required = false) String productType,
             @RequestParam(name = "q", required = false) String q,
-            // @RequestParam(name = "page", defaultValue = "0") int page,
-            // @RequestParam(name = "size", defaultValue = "20") int size,
-            // @RequestParam(name = "sortField", defaultValue = "price") String sortField,
-            // @RequestParam(name = "dir", defaultValue = "asc") String dir
-            Pageable pageable
+            @PageableDefault(size = 20, page = 0, sort = "price") Pageable pageable
     ) {
-
-        // Set<String> allowed = Set.of("price", "likeCount"); // 필요하면 필드 추가
-
-        // if (!allowed.contains(sortField)) {
-        //     sortField = "price";
-        // }
-
-        // Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        // // Pageable 생성 (기본-price asc)
-        // Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-
-        // Map<String,Object> result = crawlingService.getByUnifiedFilters(
-        //         sourceChain, promoType, productType, q, pageable
-        // );
-        // return ResponseEntity.ok(ApiResponse.ok(result));
         Map<String,Object> result = crawlingService.getByUnifiedFilters(
             sourceChain, promoType, productType, q, pageable
         );
@@ -165,6 +144,15 @@ public class CrawlingAPIController {
                     .body(ApiResponse.ok(Map.of("resultCode", 401, "resultMessage", "UNAUTHORIZED")));
         }
         Map<String, Object> resultMap = crawlingCommentService.deleteComment(commentId, principalUserId);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
+    }
+    //첫 페이지 인기행사상품
+    @GetMapping("/crawl/likeCount")
+    public ResponseEntity<ApiResponse<Map<String,Object>>> getProductLikeCount(
+            @PageableDefault(size = 5, page = 0,
+                    sort = "likeCount",
+                    direction = Sort.Direction.DESC) Pageable pageable){    
+        Map<String,Object> resultMap = crawlingService.getTop5PopularProducts();
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.ok(resultMap));
     }
 

@@ -3,8 +3,11 @@ package projecct.pyeonhang.crawling.service;
 
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,13 @@ public class CrawlingService {
     private final CrawlingRepository crawlingRepository;
     private final CrawlingCommentService crawlingCommentService;
 
+    @Cacheable(
+            value = "productList",
+            key = "#sourceChain + '-' + #promoTypeRaw + '-' + #productTypeRaw + '-' + #keyword + '-' + " +
+                    "(#pageable != null ? #pageable.pageNumber : 0) + '-' + " +
+                    "(#pageable != null ? #pageable.pageSize : 20)",
+            condition = "#pageable != null"
+    )
     public Map<String, Object> getByUnifiedFilters(
             String sourceChain,
             String promoTypeRaw,
@@ -34,6 +44,10 @@ public class CrawlingService {
             String keyword,
             Pageable pageable
     ) {
+        if (pageable == null) {
+        pageable = PageRequest.of(0, 20);
+    }
+        System.out.println("캐싱실행");
         String src = normalizeBlankToNull(sourceChain);
 
         CrawlingEntity.PromoType promo = parsePromo(promoTypeRaw);
@@ -79,7 +93,9 @@ public class CrawlingService {
     }
 
     //행사 유형별 가져오기
+    @Cacheable(value="promoList")
     public Map<String,Object> getCrawlingByPromoType(CrawlingEntity.PromoType promoType,Pageable pageable) {
+        System.out.println("메인페이지 캐싱 실행");
         Map<String,Object> resultMap = new HashMap<>();
 
         Page<CrawlingEntity> pageResult = crawlingRepository.findByPromoType(promoType, pageable);
@@ -99,11 +115,10 @@ public class CrawlingService {
 
 
 
-
-
-
     //트렌잭션 처리->업데이트 안되면 반영 X
+    //제품수정
     @Transactional
+    @CacheEvict(value = {"productList", "promoList"}, allEntries = true)
     public Map<String,Object> updateCrawlingProduct(CrawlingRequestDTO dto) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -128,6 +143,7 @@ public class CrawlingService {
 
     //제품 삭제
     @Transactional
+    @CacheEvict(value = {"productList", "promoList"}, allEntries = true)
     public Map<String,Object> deleteCrawlingProduct(int crawlId) {
         Map<String,Object> resultMap = new HashMap<>();
 
@@ -178,4 +194,19 @@ public class CrawlingService {
         return resultMap;
     }
 
+
+    public Map<String, Object> getTop5PopularProducts() {
+        Map<String, Object> result = new HashMap<>();
+
+        List<CrawlingEntity> entities = crawlingRepository.findTop5ByOrderByLikeCountDesc();
+
+        List<CrawlingDTO> items = entities.stream()
+                .map(CrawlingDTO::of)
+                .collect(Collectors.toList());
+
+        result.put("count", items.size());
+        result.put("items", items);
+
+        return result;
+    }
 }

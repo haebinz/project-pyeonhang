@@ -452,7 +452,9 @@ public class UserAPIController {
     //출석체크한날 리스트
     @GetMapping("/user/attendance")
     public ResponseEntity<ApiResponse<Object>> getMyAttendance(
-            @AuthenticationPrincipal(expression = "username") String principalUserId
+            @AuthenticationPrincipal(expression = "username") String principalUserId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
     ) {
         if (principalUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -460,13 +462,12 @@ public class UserAPIController {
         }
 
         try {
-            Map<String, Object> res = attendanceService.listAttendanceDates(principalUserId);
+            Map<String, Object> res = attendanceService.listAttendanceDates(principalUserId, year, month);
             return ResponseEntity.ok(ApiResponse.ok(res));
         } catch (Exception e) {
             log.info("출석체크 리스트 가져오기 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail("출석체크 리스트 가져오기 실패"));
         }
-
     }
 
 

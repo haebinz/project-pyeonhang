@@ -96,6 +96,17 @@ dependencies {
     //이메일 전송
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    //캐싱
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    implementation("org.seleniumhq.selenium:selenium-java:4.37.0")
+
+    implementation("org.imgscalr:imgscalr-lib:4.2")
+
+    implementation("com.mortennobel:java-image-scaling:0.8.6")
+
+
+
 
 
 }
@@ -106,4 +117,8 @@ tasks.named('test') {
 
 tasks.withType(JavaCompile) {
     options.compilerArgs += ["-parameters"]
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs '-Dfile.encoding=UTF-8','-Dsun.stdout.encoding=UTF-8','-Dsun.stderr.encoding=UTF-8'
 }

@@ -26,7 +26,6 @@ public class WishListId implements Serializable {
         if (!(o instanceof WishListId that)) return false;
         return crawlId == that.crawlId && Objects.equals(userId, that.userId);
     }
-
     @Override
     public int hashCode() {
         return Objects.hash(userId, crawlId);

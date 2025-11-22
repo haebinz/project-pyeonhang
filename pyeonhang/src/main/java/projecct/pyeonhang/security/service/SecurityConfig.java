@@ -96,16 +96,19 @@ public class SecurityConfig {
                                         .requestMatchers("/user/login/error").permitAll()
                                         .requestMatchers("/user/logout/**").permitAll()
                                         .requestMatchers("/user/add").permitAll()
+                                        .requestMatchers("/api/v1/refresh").permitAll()
+                                        .requestMatchers("/api/v1/email/**").permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                         .requestMatchers("/.well-known/**").permitAll()
                                         .requestMatchers("/favicon.ico").permitAll()
-                                        .requestMatchers("/img/**","/css/**","/js/**").permitAll()
-                                        .requestMatchers("/api/v1/**").permitAll()
-                                        .requestMatchers("/crawl/**").permitAll()
-                                        .requestMatchers("/static/**").permitAll()
-                                        .requestMatchers("/files/**").permitAll()
-                                        // .anyRequest().authenticated()
-                                        .anyRequest().permitAll()
+                                        .requestMatchers("/img/**", "/css/**", "/js/**", "/static/**", "/files/**").permitAll()
+                                        .requestMatchers("/api/v1/board", "/api/v1/board/*").permitAll()
+                                        .requestMatchers("/api/v1/crawl/**").permitAll()
+                                        .requestMatchers("/api/v1/board/**").hasRole("USER")
+                                        .requestMatchers("/api/v1/crawl/**/comment/**").hasRole("USER")
+                                        .requestMatchers("/api/v1/crawl/*/comment/**").hasRole("USER")
+                                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                        .anyRequest().authenticated()
                 )
                 // LoginFilter 전에 JWTFilter를 실행
                 .addFilterBefore(new JWTFilter(jwtUtils), LoginFilter.class)
@@ -156,7 +159,10 @@ public class SecurityConfig {
         ));
         //메서드 설정
         config.setAllowedMethods(List.of("GET",  "POST", "DELETE", "PUT", "PATCH",  "OPTIONS"));
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001","http://localhost:4000","http://localhost:4001"));
+        config.setAllowedOrigins(List.of("http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:4000", "https://pyeonhang.world",
+                "http://localhost:4001"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
