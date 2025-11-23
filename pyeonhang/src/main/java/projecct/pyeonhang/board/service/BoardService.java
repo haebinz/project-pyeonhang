@@ -467,6 +467,7 @@ public class BoardService {
         board.setContents("");
         board.setNoticeYn("N");
         board.setBestYn("N");
+        board.setTempYn("Y");
 
         boardRepository.save(board);
 
@@ -527,6 +528,7 @@ public class BoardService {
 
         board.setTitle(dto.getTitle());
         board.setContents(dto.getContents());
+        board.setTempYn("N");
 
         boardRepository.save(board);
 
