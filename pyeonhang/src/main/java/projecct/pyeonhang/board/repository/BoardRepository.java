@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import projecct.pyeonhang.board.entity.BoardEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -20,7 +21,8 @@ public interface BoardRepository extends JpaRepository<BoardEntity,Integer> {
       join b.user u
       join u.role r
      where 
-         
+         b.tempYn = 'N'
+         and(
           b.noticeYn = 'Y'
           or (
                  :keyword is null
@@ -39,7 +41,7 @@ public interface BoardRepository extends JpaRepository<BoardEntity,Integer> {
                    :searchType = 'WRITER'
                 and lower(u.userId) like lower(concat('%', :keyword, '%'))
               )
-              
+              )
           )
      order by
          
@@ -64,5 +66,9 @@ public interface BoardRepository extends JpaRepository<BoardEntity,Integer> {
     );
 
     List<BoardEntity> findAllByBrdIdIn(List<Integer> brdIdList);
+
+    void deleteAllByTempYn(String tempYn);
+
+
 
 }

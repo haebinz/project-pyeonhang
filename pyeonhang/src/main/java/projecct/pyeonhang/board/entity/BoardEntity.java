@@ -34,6 +34,9 @@ public class BoardEntity extends BaseTimeEntity {
     @Column( columnDefinition = "CHAR(1)")
     private String noticeYn;
 
+    @Column(columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String tempYn;
+
 
 
 }

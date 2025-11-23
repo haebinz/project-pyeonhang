@@ -20,8 +20,8 @@ public class CrawlingCommentResponseDTO {
     private String userId;
     private String nickname;
     private String content;
-    private LocalDateTime createDate;
-    private LocalDateTime updateDate;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
 
     public CrawlingCommentResponseDTO(Integer commentId, Integer crawlId, String userId,String nickname,
@@ -31,8 +31,8 @@ public class CrawlingCommentResponseDTO {
         this.userId = userId;
         this.nickname = nickname;
         this.content = content;
-        this.createDate = createDate;
-        this.updateDate = updateDate;
+        this.createdDate = createdDate;
+        this.updatedDate = updatedDate;
 
     }
 

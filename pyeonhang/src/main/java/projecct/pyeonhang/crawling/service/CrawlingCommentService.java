@@ -38,8 +38,8 @@ public class CrawlingCommentService {
                         .userId(c.getUser().getUserId())
                         .nickname(c.getUser().getNickname())
                         .content(c.getContent())
-                        .createDate(c.getCreateDate())
-                        .updateDate(c.getUpdateDate())
+                        .createdDate(c.getCreateDate())
+                        .updatedDate(c.getUpdateDate())
                         .build())
                 .collect(Collectors.toList());
 
@@ -71,8 +71,8 @@ public class CrawlingCommentService {
                 .crawlId(saved.getCrawling().getCrawlId())
                 .userId(saved.getUser().getUserId())
                 .content(saved.getContent())
-                .createDate(saved.getCreateDate())
-                .updateDate(saved.getUpdateDate())
+                .createdDate(saved.getCreateDate())
+                .updatedDate(saved.getUpdateDate())
                 .build();
 
         Map<String, Object> resultMap = new HashMap<>();
