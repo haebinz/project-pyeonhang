@@ -54,7 +54,8 @@ public interface BoardRepository extends JpaRepository<BoardEntity,Integer> {
 
         
           case when :sortType = 'LIKE' then b.likeCount end desc,
-          case when :sortType = 'CREATED' then b.brdId end desc
+          case when :sortType = 'CREATED' then b.brdId end desc,
+            b.brdId desc
 """)
     Page<BoardEntity> findBoardList(
             @Param("searchType") String searchType,
