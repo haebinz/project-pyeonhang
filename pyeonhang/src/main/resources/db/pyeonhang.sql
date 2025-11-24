@@ -160,11 +160,6 @@ CREATE TABLE `craw_product` (
                                 PRIMARY KEY (`crawl_id`)
 );
 
-drop table craw_product;
-select * from craw_product;
-insert into craw_product(source_chain,product_name,price,image_url,promo_type,product_type,like_count)
-values("SEV","치킨",3000,"CCC",'ONE_PLUS_ONE','SNACK',3);
-
 CREATE TABLE `crawling_comment` (
                                     `comment_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '댓글 아이디',
                                     `crawl_id` bigint(20) NOT NULL COMMENT '상품 아이디',
@@ -189,8 +184,7 @@ CREATE TABLE `wish_list` (
                              CONSTRAINT `fk_wish_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
 );
 
-drop table wish_list;
-drop table crawling_comment ;
+
 CREATE TABLE `banner` (
                           `banner_id` varchar(255) NOT NULL,
                           `title` varchar(255) DEFAULT NULL,
