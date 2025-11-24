@@ -27,7 +27,7 @@ public class CrawlingCommentResponseDTO {
 
 
     public CrawlingCommentResponseDTO(Integer commentId, Integer crawlId, String userId,String nickname,
-                                      String content, LocalDateTime createDate, LocalDateTime updateDate) {
+                                      String content, LocalDateTime createdDate, LocalDateTime updatedDate) {
         this.commentId = commentId;
         this.crawlId = crawlId;
         this.userId = userId;
