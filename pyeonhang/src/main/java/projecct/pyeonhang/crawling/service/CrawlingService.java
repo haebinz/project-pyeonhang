@@ -52,9 +52,12 @@ public class CrawlingService {
 
         CrawlingSepcification crawlingSepcification =
                 new CrawlingSepcification(sourceChain, promoTypeRaw, productTypeRaw, keyword);
-
-        Page<CrawlingEntity> page = crawlingRepository.findAll(crawlingSepcification, pageable);
-
+        Page<CrawlingEntity> page = null;
+        try {
+             page = crawlingRepository.findAll(crawlingSepcification, pageable);
+        }catch (Exception ex) {
+            ex.printStackTrace();
+        }
         Map<String,Object> resultMap = new HashMap<>();
 //        resultMap.put("sourceChain", src);
 //        resultMap.put("promoType", promo);

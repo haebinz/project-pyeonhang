@@ -57,7 +57,7 @@ public class CrawlingSepcification implements Specification<CrawlingEntity> {
 
         if (q != null){
             likeText = "%" + q +"%";
-            predicates.add(cb.or(cb.isNull(root.get("productName")), cb.like(root.get("title"), likeText)));
+            predicates.add(cb.or(cb.isNull(root.get("productName")), cb.like(root.get("productName"), likeText)));
         }
 
         String src = normalizeBlankToNull(sourceChain);
