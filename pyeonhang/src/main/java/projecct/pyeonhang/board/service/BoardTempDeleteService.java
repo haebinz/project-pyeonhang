@@ -14,7 +14,8 @@ public class BoardTempDeleteService {
         this.boardRepository = boardRepository;
     }
 
-    @Scheduled(fixedRate = 60000)
+    //빈 게시글 정리->5분마다
+    @Scheduled(fixedRate = 300000)
     @Transactional
     public void cleanTempBoards() {
         boardRepository.deleteAllByTempYn("Y");
