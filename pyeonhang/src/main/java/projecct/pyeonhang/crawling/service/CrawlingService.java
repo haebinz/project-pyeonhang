@@ -16,6 +16,7 @@ import projecct.pyeonhang.crawling.dto.CrawlingDTO;
 import projecct.pyeonhang.crawling.dto.CrawlingRequestDTO;
 import projecct.pyeonhang.crawling.entity.CrawlingEntity;
 import projecct.pyeonhang.crawling.repository.CrawlingRepository;
+import projecct.pyeonhang.crawling.repository.CrawlingSepcification;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,13 +31,13 @@ public class CrawlingService {
     private final CrawlingRepository crawlingRepository;
     private final CrawlingCommentService crawlingCommentService;
 
-    @Cacheable(
-            value = "productList",
-            key = "#sourceChain + '-' + #promoTypeRaw + '-' + #productTypeRaw + '-' + #keyword + '-' + " +
-                    "(#pageable != null ? #pageable.pageNumber : 0) + '-' + " +
-                    "(#pageable != null ? #pageable.pageSize : 20)",
-            condition = "#pageable != null"
-    )
+//    @Cacheable(
+//            value = "productList",
+//            key = "#sourceChain + '-' + #promoTypeRaw + '-' + #productTypeRaw + '-' + #keyword + '-' + " +
+//                    "(#pageable != null ? #pageable.pageNumber : 0) + '-' + " +
+//                    "(#pageable != null ? #pageable.pageSize : 20)",
+//            condition = "#pageable != null"
+//    )
     public Map<String, Object> getByUnifiedFilters(
             String sourceChain,
             String promoTypeRaw,
@@ -48,21 +49,17 @@ public class CrawlingService {
         pageable = PageRequest.of(0, 20);
     }
         System.out.println("캐싱실행");
-        String src = normalizeBlankToNull(sourceChain);
 
-        CrawlingEntity.PromoType promo = parsePromo(promoTypeRaw);
-        CrawlingEntity.ProductType prod = parseProduct(productTypeRaw);
+        CrawlingSepcification crawlingSepcification =
+                new CrawlingSepcification(sourceChain, promoTypeRaw, productTypeRaw, keyword);
 
-        String q = normalizeBlankToNull(keyword);
-        if (q != null) q = q.trim();
-
-        Page<CrawlingEntity> page = crawlingRepository.filterAll(src, promo, prod, q, pageable);
+        Page<CrawlingEntity> page = crawlingRepository.findAll(crawlingSepcification, pageable);
 
         Map<String,Object> resultMap = new HashMap<>();
-        resultMap.put("sourceChain", src);
-        resultMap.put("promoType", promo);
-        resultMap.put("productType", prod);
-        resultMap.put("query", q);
+//        resultMap.put("sourceChain", src);
+//        resultMap.put("promoType", promo);
+//        resultMap.put("productType", prod);
+//        resultMap.put("query", q);
         resultMap.put("totalElements", page.getTotalElements());
         resultMap.put("totalPages", page.getTotalPages());
         resultMap.put("currentPage", pageable.getPageNumber());

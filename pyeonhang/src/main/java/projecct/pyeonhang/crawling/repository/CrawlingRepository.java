@@ -4,6 +4,7 @@ package projecct.pyeonhang.crawling.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,16 +13,26 @@ import projecct.pyeonhang.crawling.entity.CrawlingEntity;
 
 import java.util.List;
 
-public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer> {
+public interface CrawlingRepository extends JpaRepository<CrawlingEntity,Integer> ,
+                                                 JpaSpecificationExecutor<CrawlingEntity> {
 
-    @Query("""
+    @Query(value="""
       select c
         from CrawlingEntity c
        where (:sourceChain is null or lower(c.sourceChain) = lower(:sourceChain))
          and (:promoType  is null or c.promoType = :promoType)
          and (:productType is null or c.productType = :productType)
          and (:productName is null or lower(c.productName) like lower(concat('%', :productName, '%')))
-    """)
+    """,
+   countQuery = """
+  select count(c)
+    from CrawlingEntity c
+   where (:sourceChain is null or lower(c.sourceChain) = lower(:sourceChain))
+     and (:promoType  is null or c.promoType = :promoType)
+     and (:productType is null or c.productType = :productType)
+     and (:productName is null or lower(c.productName) like lower(concat('%', :productName, '%')))
+"""
+    )
     Page<CrawlingEntity> filterAll(
             @Param("sourceChain") String sourceChain,
             @Param("promoType") CrawlingEntity.PromoType promoType,
