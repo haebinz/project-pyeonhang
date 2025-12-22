@@ -97,8 +97,15 @@ public class CouponService {
 
             MultipartFile file = update.getFile();
 
-            String updateUrl = cloudinaryService.updateFile(file, "coupon", update.getCloudinaryId());
-            coupon.setImgUrl(updateUrl);
+            // 수정할 이미지 있으면 수정
+            if (file != null && !file.isEmpty()) {
+                String updateUrl = cloudinaryService.updateFile(
+                        file,
+                        "coupon",
+                        update.getCloudinaryId()
+                );
+                coupon.setImgUrl(updateUrl);
+            }
 
             resultMap.put("couponId", coupon.getCouponId());
             resultMap.put("description", coupon.getDescription());

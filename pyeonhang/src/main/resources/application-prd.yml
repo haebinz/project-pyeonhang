@@ -8,6 +8,9 @@ server:
       force: true
       force-request: true
       force-response: true
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   port: 9090 #나중에 AWS포트로변경
   file:
     upload:
@@ -46,9 +49,9 @@ spring:
   #Database 설정
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url : jdbc:mariadb://pyeonhang-db.cjg402amekn6.ap-southeast-2.rds.amazonaws.com/pyeonhang
-    username: root
-    password: goqlsgoqls1
+    url : jdbc:mariadb://pyeonhang.ceriu02us288.us-east-1.rds.amazonaws.com:3306/pyeonhang
+    username: boeun
+    password: s1037eojjm
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       connection-timeout: 60000

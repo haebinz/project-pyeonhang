@@ -123,7 +123,7 @@ public class AdminUserAPIController {
     }
 
     // 배너 사용여부 리스트
-    @GetMapping("/admin/useBanner")
+    @GetMapping("/useBanner")
     public ResponseEntity<ApiResponse<Object>> getUseBannerList() {
         try {
             Map<String, Object> resultMap = new HashMap<>();

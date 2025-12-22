@@ -89,13 +89,11 @@ public class SecurityConfig {
                 //인증/비인증 경로 처리
                 .authorizeHttpRequests(
                         auth ->
-                                auth.requestMatchers("/**").permitAll()
-                                        .requestMatchers("/user/login").permitAll()
-                                        .requestMatchers("/user/login/**").permitAll()// 인증처리 안함 패스
-                                        .requestMatchers("/api/v1/user/login").permitAll() // 인증처리 안함 패스
-                                        .requestMatchers("/user/login/error").permitAll()
-                                        .requestMatchers("/user/logout/**").permitAll()
-                                        .requestMatchers("/user/add").permitAll()
+                                auth.requestMatchers("/api/v1/user/login").permitAll()
+                                        .requestMatchers("/api/v1/user/login/**").permitAll()// 인증처리 안함 패스
+                                        .requestMatchers("/api/v1/user/login/error").permitAll()
+                                        .requestMatchers("/api/v1/user/logout/**").permitAll()
+                                        .requestMatchers("/api/v1/user/add").permitAll()
                                         .requestMatchers("/api/v1/refresh").permitAll()
                                         .requestMatchers("/api/v1/email/**").permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -103,10 +101,10 @@ public class SecurityConfig {
                                         .requestMatchers("/favicon.ico").permitAll()
                                         .requestMatchers("/img/**", "/css/**", "/js/**", "/static/**", "/files/**").permitAll()
                                         .requestMatchers("/api/v1/board", "/api/v1/board/*").permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/crawl/**").permitAll()
                                         .requestMatchers("/api/v1/crawl/**").permitAll()
-                                        .requestMatchers("/api/v1/board/**").hasRole("USER")
-                                        .requestMatchers("/api/v1/crawl/**/comment/**").hasRole("USER")
-                                        .requestMatchers("/api/v1/crawl/*/comment/**").hasRole("USER")
+                                        .requestMatchers("/api/v1/crawl/*/comment","/api/v1/crawl/comment/*").hasRole("USER")
+                                        .requestMatchers("/api/v1/board/**").hasAnyRole("USER", "ADMIN")
                                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                                         .anyRequest().authenticated()
                 )
@@ -161,7 +159,12 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET",  "POST", "DELETE", "PUT", "PATCH",  "OPTIONS"));
         config.setAllowedOrigins(List.of("http://localhost:3000",
                 "http://localhost:3001",
-                "http://localhost:4000", "https://pyeonhang.world",
+                "http://localhost:4000", 
+                "https://pyeonhang.world", 
+                "https://pyeonhang.boeun.site",
+                "https://www.pyeonhang.boeun.site",
+                "http://pyeonhang.boeun.site",
+                "http://www.pyeonhang.boeun.site",
                 "http://localhost:4001"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
